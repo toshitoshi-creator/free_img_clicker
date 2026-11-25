@@ -7,9 +7,9 @@
 - `index.html` … 画面
 - `style.css` … 見た目
 - `config.js` … バランス調整用の数値（排出率・倍率・自動クリック）
-- `items.js` … 素材データ（全45種：N16 / R18 / SR11）。`tools/build-assets.js` で自動生成
-- `images/` … R・SR の画像ファイル
-- `tools/asset-list.js` … 入れる素材の一覧（ここを編集して作り直す）
+- `items.js` … 素材データ（全277種：N37 / R111 / SR129、ジャンル 食べ物98・動物107・家具39・食器33）。`tools/build-assets.js` で自動生成
+- `images/n` ドット絵 PNG、`images/r` イラスト（SVG・WebP）、`images/sr` 写真（240px JPEG）
+- `tools/asset-list.js` … N・R の素材一覧、`tools/photo-list.json` … SR 写真の一覧（ここを編集して作り直す）
 - `LICENSES.md` … 素材のクレジットとライセンス
 - `game.js` … ゲームロジック
 
@@ -24,27 +24,29 @@
 ## 仕様
 - **素材**：すべて実在のフリー素材（詳しくは LICENSES.md）
   - N ドット絵：Streamline Pixel（CC BY 4.0）・pixelarticons（MIT）を色付けしたもの
-  - R イラスト：Twemoji（CC BY 4.0）
-  - SR 写真風：Microsoft Fluent Emoji 3D（MIT）
-- **ランク**：N＝ドット絵、R＝イラスト、SR＝写真風。排出率 70/25/5%
-- **ポイント**：1タップで「倍率」分のポイント。カプセル1個の値段は `10 × (引いた回数+1)^1.5`（目安：5タップ/秒で自動クリック解放まで約1〜4分、コンプまで約3〜10分）
-- **倍率**：`(1 + N種類数×1) × (1 + R種類数×0.25) × (1 + SR種類数×2)` を切り捨て
+  - R イラスト：Twemoji（CC BY 4.0）・Microsoft Fluent Emoji 3D（MIT）
+  - SR 写真：Smithsonian Open Access（CC0。動物＝スミソニアン国立動物園、家具・食器＝クーパー・ヒューイット）、Fruits-360（MIT。果物・野菜）
+- **ランク**：N＝ドット絵、R＝イラスト、SR＝写真。排出率 60/28/12%
+- **ポイント**：1タップで「倍率」分のポイント。カプセル1個の値段は `10 × (引いた回数+1)^1.5`（`CAPSULE_POW` 1.85。目安：5タップ/秒で自動クリック解放まで約2〜3分、全277種コンプまで約30〜50分）
+- **倍率**：`(1 + N種類数×1) × (1 + R種類数×0.2) × (1 + SR種類数×1)` × コンプボーナス を切り捨て
   - 最初の1枚で2倍
 - **ジャンル別コンプボーナス**：「ランク×ジャンル」を全種そろえるごとに倍率×1.2（`GENRE_BONUS`）
-- **ランク別コンプボーナス**：N を全種そろえると倍率×2、R は×3、SR は×5（掛け算。全45種コンプで約33万倍）
+- **ランク別コンプボーナス**：N を全種そろえると倍率×2、R は×3、SR は×5（掛け算。全277種コンプで約3,000万倍）
 - **自動クリック**：新規カード（種類数）が20種に達したら解放。間隔は 1000ms から、1種増えるごとに ×0.9（最短50ms）
   - 自動クリックにも倍率が乗る。タップ数には数えない
 - **クリック合計**：これまでのクリック（タップ＋自動クリック）で稼いだポイントの合計。ステータスバーに常に表示、内訳はメニューの記録に
 - **全種コンプ記録**：最初のタップからコンプまでの時間・タップ数・回数を表示
 - **図鑑の詳細**：入手済みカードを押すと拡大表示＋所持数・素材の出典
 - **クレジット画面**：素材の配布元ごとに作者・ライセンス・改変内容・該当素材を一覧
-- **セーブ**：localStorage（キー `sozai-gacha-v3`。素材入れ替えのため v2 のセーブは引き継がない）
+- **セーブ**：localStorage（キー `sozai-gacha-v3`。素材の種類数が変わると全種コンプ記録は取り直し）
 
 ## 素材の入れ替え・追加
 1. 素材の npm パッケージを取得して展開（`npm pack <名前>` → `tar xzf`。展開先のフォルダ名は `tools/build-assets.js` 冒頭を参照）
-2. `tools/asset-list.js` に行を足す（N は `icon` と `fill`、R・SR は絵文字の `code`）
-3. `node tools/build-assets.js <展開したディレクトリ>` で `items.js` と `images/` を作り直す
-4. 新しい配布元を使ったら `CREDIT` と LICENSES.md にも追記する
+2. `tools/asset-list.js`（N・R）または `tools/photo-list.json`（SR 写真）に行を足す
+   - N は `icon` と `fill`、R は絵文字の `code`、SR は Smithsonian の画像ID（`media`）か Fruits-360 のフォルダ名
+3. 写真を変えたら `python3 tools/build-photos.py <キャッシュ> <Fruits-360のclone>`（Fruits-360 は `git clone --filter=blob:none --no-checkout` で十分）
+4. `node tools/build-assets.js <展開したディレクトリ>` で `items.js` と `images/` を作り直す（名前・ID の重複はエラーになる）
+5. 新しい配布元を使ったら `CREDIT` と LICENSES.md にも追記する
 
 Kenney（kenney.nl、CC0）の素材も使える。zip をダウンロードして `images/` に置き、`items.js` の該当アイテムに `img` と `credit` を書けばよい（CC0 なので表記は任意だが、クレジットには載せる）
 

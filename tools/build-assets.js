@@ -1,4 +1,4 @@
-// 実在フリー素材から items.js と images/ を作るスクリプト
+// 実在フリー素材から items.js と images/ を作るスクリプト（SR 写真は先に tools/build-photos.py を実行）
 // 使い方: node tools/build-assets.js <npmパッケージを展開したディレクトリ>
 //   必要なパッケージ（npm pack で取得して展開）:
 //     @iconify-json/streamline-pixel (CC BY 4.0) / @iconify-json/pixelarticons (MIT)
@@ -14,7 +14,12 @@ const CREDIT = {
   pa: { author: 'Gerrit Halfmann（pixelarticons）', license: 'MIT', url: 'https://github.com/halfmage/pixelarticons', note: 'ドット化して色付け' },
   tw: { author: 'Twitter, Inc. ほか（Twemoji）', license: 'CC BY 4.0', url: 'https://github.com/jdecked/twemoji' },
   fl: { author: 'Microsoft（Fluent Emoji）', license: 'MIT', url: 'https://github.com/microsoft/fluentui-emoji' },
+  nzp: { author: "Smithsonian's National Zoo（Smithsonian Open Access）", license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に切り抜き・縮小' },
+  ch: { author: 'Cooper Hewitt, Smithsonian Design Museum（Smithsonian Open Access）', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に余白を足して縮小' },
+  fr: { author: 'Mihai Oltean, Horea Muresan（Fruits-360）', license: 'MIT', url: 'https://github.com/Horea94/fruit-images-dataset', note: '拡大' },
 };
+// 絵文字ファイル名の揺れ（fe0f の有無）を吸収して探す
+const findFile = (dir, code, ext) => [code, code.replace(/-fe0f/g, ''), code + '-fe0f'].map(c => path.join(dir, c + '.' + ext)).find(fs.existsSync);
 
 const icons = {
   sp: JSON.parse(fs.readFileSync(path.join(SRC, '_iconify-json_streamline-pixel/package/icons.json'))),
@@ -50,9 +55,12 @@ function toPixelSvg(mask, n, fill, line) {
   const b = await chromium.launch(), p = await b.newPage();
   const items = [];
   fs.mkdirSync(path.join(OUT, 'images/r'), { recursive: true });
-  fs.mkdirSync(path.join(OUT, 'images/sr'), { recursive: true });
+  fs.mkdirSync(path.join(OUT, 'images/n'), { recursive: true });
   for (const it of LIST) {
     const o = { id: it.id, name: it.name, rank: it.rank, cat: it.cat, credit: CREDIT[it.src] };
+    if (it.src === 'fl') { // Fluent 3D に無い絵文字は Twemoji で代用
+      if (!findFile(path.join(SRC, '_lobehub_fluent-emoji-3d/package/assets'), it.code, 'webp')) { it.src = 'tw'; o.credit = CREDIT.tw; console.log('Fluent に無いので Twemoji:', it.name); }
+    }
     if (it.src === 'sp' || it.src === 'pa') {
       const set = icons[it.src], ic = set.icons[it.icon]; if (!ic) throw new Error('icon ' + it.icon);
       const n = GRID[it.src], W = set.width;
@@ -63,22 +71,35 @@ function toPixelSvg(mask, n, fill, line) {
         x.drawImage(im, 0, 0, n, n); const d = x.getImageData(0, 0, n, n).data;
         return Array.from({ length: n * n }, (_, i) => d[i * 4 + 3] > 110 ? 1 : 0);
       }, { svg, n });
-      o.art = toPixelSvg(mask, n, it.fill, it.line || '#2a1a12');
+      // 色付けしたドット絵を 1マス=1px の PNG にして保存（表示側で拡大）
+      const svgArt = toPixelSvg(mask, n, it.fill, it.line || '#2a1a12');
+      const png = await p.evaluate(async ({ svgArt, n }) => {
+        const s = svgArt.replace('<svg ', `<svg xmlns="http://www.w3.org/2000/svg" width="${n + 2}" height="${n + 2}" `);
+        const im = new Image(); im.src = 'data:image/svg+xml;base64,' + btoa(s); await im.decode();
+        const c = document.createElement('canvas'); c.width = c.height = n + 2; const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+        x.drawImage(im, 0, 0); return c.toDataURL('image/png').split(',')[1];
+      }, { svgArt, n });
+      fs.writeFileSync(path.join(OUT, 'images/n', it.id + '.png'), Buffer.from(png, 'base64')); o.img = `images/n/${it.id}.png`;
     } else if (it.src === 'tw') {
-      const f = path.join(SRC, '_twemoji_svg/package', it.code + '.svg');
+      const f = findFile(path.join(SRC, '_twemoji_svg/package'), it.code, 'svg'); if (!f) throw new Error('twemoji ' + it.name);
       fs.copyFileSync(f, path.join(OUT, 'images/r', it.id + '.svg')); o.img = `images/r/${it.id}.svg`;
     } else if (it.src === 'fl') {
-      const dir = path.join(SRC, '_lobehub_fluent-emoji-3d/package/assets');
-      const f = [it.code + '.webp', it.code + '-fe0f.webp'].map(x => path.join(dir, x)).find(fs.existsSync);
-      if (!f) throw new Error('fluent ' + it.code);
-      fs.copyFileSync(f, path.join(OUT, 'images/sr', it.id + '.webp')); o.img = `images/sr/${it.id}.webp`;
+      const f = findFile(path.join(SRC, '_lobehub_fluent-emoji-3d/package/assets'), it.code, 'webp');
+      fs.copyFileSync(f, path.join(OUT, 'images/r', it.id + '.webp')); o.img = `images/r/${it.id}.webp`;
+    } else if (it.src.startsWith('photo:')) { // 写真は tools/build-photos.py で images/sr/ に作成済み
+      const k = it.src.slice(6); o.img = `images/sr/${it.id}.jpg`;
+      o.credit = { ...CREDIT[k], ...(k === 'ch' && it.url ? { url: it.url } : {}), ...(k === 'nzp' ? { author: `${it.author}（Smithsonian Open Access）` } : {}) };
+      if (it.title) o.credit.title = it.title;
+      if (!fs.existsSync(path.join(OUT, o.img))) throw new Error('photo ' + o.img);
     }
     items.push(o);
   }
   await b.close();
+  const dup = (k) => items.map(i => i[k]).filter((v, i, a) => a.indexOf(v) !== i);
+  if (dup('id').length || dup('name').length) throw new Error('重複: ' + dup('id') + ' / ' + dup('name'));
   const js = `// 自動生成：node tools/build-assets.js（元データは tools/asset-list.js）
 // 素材はすべて実在のフリー素材。出典とライセンスは各 credit と LICENSES.md を参照
 const ITEMS = [\n${items.map(o => JSON.stringify(o)).join(',\n')}\n];\n`;
   fs.writeFileSync(path.join(OUT, 'items.js'), js);
-  console.log(items.length, 'items', ['N', 'R', 'SR'].map(r => r + ':' + items.filter(i => i.rank === r).length).join(' '));
+  console.log(items.length, 'items', ['N', 'R', 'SR'].map(r => r + ':' + items.filter(i => i.rank === r).length).join(' '), [...new Set(items.map(i => i.cat))].map(c => c + ':' + items.filter(i => i.cat === c).length).join(' '));
 })();

@@ -46,6 +46,8 @@ button{font:inherit;color:inherit}
 .card{border-radius:16px;padding:8px;border:4px solid var(--line);background:#fff;color:#2a1a12;text-align:center;position:relative;display:block}
 .card .art{aspect-ratio:1;border-radius:9px;background:#f3efe6;display:grid;place-items:center;overflow:hidden}
 .card .art svg,.card .art img{width:100%;height:100%;display:block;object-fit:contain}
+.card .art img.px{image-rendering:pixelated;image-rendering:crisp-edges;padding:6%}
+.SR .art img{object-fit:cover}
 
 .card .nm{font-weight:800;margin-top:4px;line-height:1.3}
 .N{background:linear-gradient(135deg,#e0a77a,#b5703f)}
@@ -102,7 +104,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 #dlgBody .card{width:min(180px,50vw)}
 #dlgBody h3{margin:0;font-size:20px}#dlgBody p{margin:0}
 #dlgClose{display:block;margin:0 auto}
-.cr{margin:0;padding-left:1.2em;align-self:stretch;font-size:14px}.cr li{margin-bottom:8px}.small{font-size:12px;opacity:.8}
+.cr{margin:0;padding-left:1.2em;align-self:stretch;font-size:14px}.cr li{margin-bottom:10px}.cr details{margin-top:2px}.cr summary{cursor:pointer}.small{font-size:12px;opacity:.8}
 #dlg a{color:inherit}
 
 @media(prefers-reduced-motion:reduce){.pop,.plus{animation:none}.plus{display:none}}

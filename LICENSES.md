@@ -1,18 +1,21 @@
 # 素材クレジット・ライセンス
 
-このゲームの絵はすべて、以下の実在するフリー素材を使用しています。
-どの素材がどこから来たかは `tools/asset-list.js`（`src` 列）と、ゲーム内の図鑑詳細・クレジット画面で確認できます。
+このゲームの絵と写真（全277種）はすべて、以下の実在するフリー素材を使用しています。
+どの素材がどこから来たかは `tools/asset-list.js`・`tools/photo-list.json` と、ゲーム内の図鑑詳細・クレジット画面で確認できます。
 
 | ランク | 素材 | 作者 | ライセンス | 配布元 | 改変 |
 |---|---|---|---|---|---|
 | N ドット絵（食べ物・動物） | Streamline Pixel | Streamline | CC BY 4.0 | https://github.com/webalys-hq/streamline-vectors | ドット化して色付け |
 | N ドット絵（家具） | pixelarticons | Gerrit Halfmann | MIT | https://github.com/halfmage/pixelarticons | ドット化して色付け |
 | R イラスト | Twemoji | Twitter, Inc. and other contributors | CC BY 4.0（グラフィック） | https://github.com/jdecked/twemoji | なし |
-| SR 写真風 | Fluent Emoji（3D） | Microsoft Corporation | MIT | https://github.com/microsoft/fluentui-emoji | なし |
+| R イラスト | Fluent Emoji（3D） | Microsoft Corporation | MIT | https://github.com/microsoft/fluentui-emoji | なし |
+| SR 写真（動物） | Smithsonian's National Zoo & Conservation Biology Institute（撮影者は items.js の credit.author） | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 正方形に切り抜き・縮小 |
+| SR 写真（家具・食器） | Cooper Hewitt, Smithsonian Design Museum（各作品ページは credit.url） | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 余白を足して正方形・縮小 |
+| SR 写真（食べ物） | Fruits-360 | Mihai Oltean, Horea Muresan | MIT | https://github.com/Horea94/fruit-images-dataset | 拡大 |
 
 フォント：M PLUS Rounded 1c（SIL Open Font License 1.1、Google Fonts から読み込み）
 
-取得元の npm パッケージ：`@iconify-json/streamline-pixel`、`@iconify-json/pixelarticons`、`@twemoji/svg`、`@lobehub/fluent-emoji-3d`
+取得元：npm パッケージ `@iconify-json/streamline-pixel`、`@iconify-json/pixelarticons`、`@twemoji/svg`、`@lobehub/fluent-emoji-3d`／Smithsonian Open Access の AWS 公開バケット（`smithsonian-open-access`）／GitHub `Horea94/fruit-images-dataset`
 
 ---
 
@@ -37,6 +40,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## MIT License（Fruits-360）
+
+Copyright (c) 2017-2020 Mihai Oltean, Horea Muresan
+
+（許諾文は上と同じ MIT License の本文）
 
 ## MIT License（pixelarticons）
 

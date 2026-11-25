@@ -22,28 +22,37 @@ function placeholder(it) {
   if (it.rank === 'R') return `<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="34" fill="hsl(${hue},70%,78%)" stroke="#333" stroke-width="3"/><text x="50" y="64" text-anchor="middle" font-size="34" font-weight="800" fill="#333">${ch}</text></svg>`;
   return `<svg viewBox="0 0 100 100"><defs><radialGradient id="p${it.id}" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="hsl(${hue},40%,85%)"/><stop offset="1" stop-color="hsl(${hue},45%,22%)"/></radialGradient></defs><rect width="100" height="100" fill="url(#p${it.id})"/><text x="50" y="62" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" opacity=".85">${ch}</text></svg>`;
 }
-const artOf = it => it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy">` : (it.art || placeholder(it));
+const artOf = it => it.img ? `<img src="${esc(it.img)}" alt=""${it.rank === 'N' ? ' class="px"' : ''} loading="lazy" decoding="async">` : (it.art || placeholder(it));
 
 
 // ---- 状態 ----
 const fresh = () => ({ taps: 0, points: 0, draws: 0, own: {}, start: 0, clearedAt: 0, earned: 0, earnedAuto: 0 });
 let st = fresh();
 try { const s = JSON.parse(localStorage.getItem(CONFIG.SAVE_KEY)); if (s && typeof s.points === 'number') st = Object.assign(st, s); } catch (e) {}
+if (st.clearedAt && st.clearedN !== ITEMS.length) { st.prevClear = { at: st.clearedAt - st.start, n: st.clearedN || 45 }; st.clearedAt = 0; } // 素材が増えたらコンプ記録は取り直し
 const save = () => { try { localStorage.setItem(CONFIG.SAVE_KEY, JSON.stringify(st)); } catch (e) {} };
 
 const uniq = rank => ITEMS.filter(i => (!rank || i.rank === rank) && st.own[i.id]).length;
+// 倍率は持っている種類が変わったときだけ計算し直す（素材が多いので毎タップ計算しない）
+let multCache = null;
+const dirty = () => { multCache = null; zukanDirty = true; };
+let zukanDirty = true;
 const RANKS = ['N', 'R', 'SR'];
 const total = rank => ITEMS.filter(i => i.rank === rank).length;
 const isComp = rank => uniq(rank) === total(rank);
-// ジャンル：items.js の並び順、追加素材の新ジャンルはその後ろ
-const genres = () => [...new Set(ITEMS.map(i => i.cat))];
+// ジャンル：items.js の並び順
+const GENRES = [...new Set(ITEMS.map(i => i.cat))];
+const genres = () => GENRES;
 // ランク×ジャンルの区分（例：N・動物）。素材がある区分だけ
-const cells = () => RANKS.flatMap(r => genres().filter(g => ITEMS.some(i => i.rank === r && i.cat === g)).map(g => r + '・' + g));
-const cellItems = key => { const [r, g] = key.split('・'); return ITEMS.filter(i => i.rank === r && i.cat === g); };
+const CELLS = RANKS.flatMap(r => GENRES.filter(g => ITEMS.some(i => i.rank === r && i.cat === g)).map(g => r + '・' + g));
+const CELL_ITEMS = Object.fromEntries(CELLS.map(k => { const [r, g] = k.split('・'); return [k, ITEMS.filter(i => i.rank === r && i.cat === g)]; }));
+const cells = () => CELLS;
+const cellItems = key => CELL_ITEMS[key];
 const isCellComp = key => cellItems(key).every(i => st.own[i.id]);
 const compBonus = () => RANKS.reduce((m, k) => m * (isComp(k) ? CONFIG.COMP_BONUS[k] : 1), 1)
   * CONFIG.GENRE_BONUS ** cells().filter(isCellComp).length;
-const mult = () => Math.floor((1 + uniq('N') * CONFIG.MULT.N) * (1 + uniq('R') * CONFIG.MULT.R) * (1 + uniq('SR') * CONFIG.MULT.SR) * compBonus());
+const mult = () => multCache ?? (multCache = calcMult());
+const calcMult = () => Math.floor((1 + uniq('N') * CONFIG.MULT.N) * (1 + uniq('R') * CONFIG.MULT.R) * (1 + uniq('SR') * CONFIG.MULT.SR) * compBonus());
 const cost = () => Math.floor(CONFIG.CAPSULE_BASE * (st.draws + 1) ** CONFIG.CAPSULE_POW);
 const autoOn = () => uniq() >= CONFIG.AUTO_UNLOCK;
 const autoMs = () => Math.max(CONFIG.AUTO_MIN_MS, Math.round(CONFIG.AUTO_BASE_MS * CONFIG.AUTO_SHRINK ** (uniq() - CONFIG.AUTO_UNLOCK)));
@@ -66,12 +75,13 @@ function tap(isAuto) {
     st.points -= cost(); st.draws++;
     const it = drawOne(), isNew = !st.own[it.id];
     st.own[it.id] = (st.own[it.id] || 0) + 1;
+    if (isNew) dirty();
     got.push({ it, isNew });
     if (isNew) ensureAuto(); // 種類が増えたら自動クリックの間隔を更新
   }
   const comps = RANKS.filter(k => isComp(k) && !before.includes(k));
   const cellComps = got.length ? cells().filter(k => isCellComp(k) && !beforeCells.includes(k)) : [];
-  if (comps.length && uniq() === ITEMS.length && !st.clearedAt) st.clearedAt = Date.now();
+  if (comps.length && uniq() === ITEMS.length && !st.clearedAt) { st.clearedAt = Date.now(); st.clearedN = ITEMS.length; }
   if (got.length) showResult(got, comps, cellComps);
   if (got.some(g => g.isNew) && view !== 'zukan') $('newdot').hidden = false;
   save(); render();
@@ -122,13 +132,14 @@ function render() {
   $('record').innerHTML = `<dt>合計ポイント</dt><dd>${fmt(st.earned)} pt</dd><dt>　うちタップ</dt><dd>${fmt(st.earned - st.earnedAuto)} pt</dd><dt>　うち自動</dt><dd>${fmt(st.earnedAuto)} pt</dd><dt>タップ数</dt><dd>${fmt(st.taps)}</dd><dt>ガチャ回数</dt><dd>${fmt(st.draws)}</dd><dt>次の1個</dt><dd>${fmt(c)} pt</dd><dt>プレイ開始</dt><dd>${st.start ? new Date(st.start).toLocaleString('ja-JP') : '—'}</dd>`;
   if (st.clearedAt) $('clear').textContent = `🎉 全種コンプ記録：${dur(st.clearedAt - st.start)}（${fmt(st.taps)}タップ・${fmt(st.draws)}回）`;
   $('earned').textContent = short(st.earned);
-  renderZukan();
+  if (view === 'zukan' && zukanDirty) renderZukan();
 }
 
 // ---- 図鑑：ランクタブ × ジャンルチップ、ランク×ジャンルごとに区切って表示 ----
 let gfilter = 'ALL';
 const chip = (attr, k, label, list, on) => { const have = list.filter(i => st.own[i.id]).length; return `<button type="button" ${attr}="${esc(k)}" aria-pressed="${on}">${list.length && have === list.length ? '★ ' : ''}${esc(label)} ${have}/${list.length}</button>`; };
 function renderZukan() {
+  zukanDirty = false;
   if (gfilter !== 'ALL' && !genres().includes(gfilter)) gfilter = 'ALL';
   const inG = i => gfilter === 'ALL' || i.cat === gfilter, inR = i => filter === 'ALL' || i.rank === filter;
   $('tabs').innerHTML = ['ALL', ...RANKS].map(k => chip('data-k', k, k === 'ALL' ? 'すべて' : RLBL[k], ITEMS.filter(i => (k === 'ALL' || i.rank === k) && inG(i)), filter === k)).join('');
@@ -164,10 +175,10 @@ document.querySelector('.tabbar').addEventListener('click', e => {
   view = b.dataset.v;
   document.querySelectorAll('.tabbar button').forEach(x => x === b ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current'));
   document.querySelectorAll('.view').forEach(v => { const on = v.id === 'v-' + view; v.hidden = !on; v.classList.toggle('active', on); });
-  if (view === 'zukan') $('newdot').hidden = true;
+  if (view === 'zukan') { $('newdot').hidden = true; if (zukanDirty) renderZukan(); }
 });
-$('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.k; renderZukan(); } });
-$('genres').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { gfilter = b.dataset.g; renderZukan(); } });
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.k; renderZukan(); $('v-zukan').scrollTop = 0; } });
+$('genres').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { gfilter = b.dataset.g; renderZukan(); $('v-zukan').scrollTop = 0; } });
 // ---- 詳細・クレジット ----
 const credit = it => it.credit ? `${esc(it.credit.author)}／${esc(it.credit.license)}${it.credit.note ? '（' + esc(it.credit.note) + '）' : ''} <a href="${esc(it.credit.url)}" target="_blank" rel="noopener">配布元</a>` : 'オリジナル';
 const dlg = $('dlg');
@@ -179,11 +190,14 @@ function openDetail(id) {
 }
 $('grid').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (b) openDetail(b.dataset.id); });
 $('credits').addEventListener('click', () => {
-  const groups = {};
-  ITEMS.forEach(i => { const k = i.credit ? i.credit.author : 'オリジナル'; (groups[k] = groups[k] || { c: i.credit, list: [] }).list.push(i.name); });
-  openDlg(`<h3>クレジット</h3><p class="small">このゲームの絵はすべて、以下のフリー素材を使わせていただいています。</p><ul class="cr">${Object.entries(groups).map(([k, g]) => `<li><b>${esc(k)}</b><br>${g.c ? `${esc(g.c.license)}${g.c.note ? '・' + esc(g.c.note) : ''}・<a href="${esc(g.c.url)}" target="_blank" rel="noopener">配布元</a><br>` : ''}<span class="small">${g.list.map(esc).join('、')}</span></li>`).join('')}</ul>`
-    + `<p class="small">MIT ライセンスの素材は著作権表示と許諾文を LICENSES.md に収録しています。フォント：M PLUS Rounded 1c（SIL Open Font License）</p>`);
+  // 配布元（URL＋ライセンス）ごとにまとめる。スミソニアンは撮影者・所蔵館が複数
+  const src = {};
+  const isSI = c => /si\.edu|cooperhewitt/.test(c.url);
+  ITEMS.forEach(i => { const c = i.credit, k = isSI(c) ? 'si' : c.url + c.license; (src[k] = src[k] || { c: isSI(c) ? { author: 'Smithsonian Open Access', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に加工・縮小' } : c, list: [], authors: new Set() }).list.push(i.name); src[k].authors.add(c.author.replace('（Smithsonian Open Access）', '')); });
+  openDlg(`<h3>クレジット</h3><p class="small">このゲームの${ITEMS.length}種の絵と写真は、すべて実在のフリー素材です。</p><ul class="cr">${Object.values(src).map(g => `<li><b>${esc(g.c.author)}</b><br>${esc(g.c.license)}${g.c.note ? '・' + esc(g.c.note) : ''}・<a href="${esc(g.c.url)}" target="_blank" rel="noopener">配布元</a>${g.authors.size > 1 ? `<details><summary class="small">撮影・所蔵（${g.authors.size}件）</summary><span class="small">${[...g.authors].map(esc).join('<br>')}</span></details>` : ''}<details><summary class="small">使っている素材（${g.list.length}種）</summary><span class="small">${g.list.map(esc).join('、')}</span></details></li>`).join('')}</ul>`
+    + `<p class="small">MIT ライセンスの素材の著作権表示と許諾文は LICENSES.md に収録しています。フォント：M PLUS Rounded 1c（SIL Open Font License）</p>`);
 });
+
 $('dlgClose').addEventListener('click', () => dlg.close());
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 
@@ -191,7 +205,7 @@ let armed = false;
 $('reset').addEventListener('click', () => {
   if (!armed) { armed = true; $('reset').textContent = 'もう一度押すとリセット'; setTimeout(() => { armed = false; $('reset').textContent = 'データをリセット'; }, 3000); return; }
   clearInterval(timer); timer = null; timerMs = 0;
-  st = fresh(); save(); armed = false;
+  st = fresh(); save(); armed = false; dirty();
   $('reset').textContent = 'データをリセット';
   $('stage').innerHTML = '<p class="empty">タップでポイントを貯めると<br>カプセルが出てくるよ</p>';
   render();
