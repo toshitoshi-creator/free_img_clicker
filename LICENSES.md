@@ -1,6 +1,6 @@
 # 素材クレジット・ライセンス
 
-このゲームの絵と写真（全560種）はすべて、以下の実在するフリー素材を使用しています。
+このゲームの絵と写真（全913種）はすべて、以下の実在するフリー素材を使用しています。
 どの素材がどこから来たかは `tools/asset-list.js`・`tools/photo-list.json` と、ゲーム内の図鑑詳細・クレジット画面で確認できます。
 
 | ランク | 素材 | 作者 | ライセンス | 配布元 | 改変 |
@@ -14,11 +14,14 @@
 | SR 写真（家具・食器） | Cooper Hewitt, Smithsonian Design Museum（各作品ページは credit.url） | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 余白を足して正方形・縮小 |
 | SR 写真（飛行機・宇宙船） | National Air and Space Museum（各収蔵品ページは credit.url） | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 余白を足して正方形・縮小 |
 | SR 写真（植物・乗り物） | Open Images Dataset V4（Flickr の各撮影者。撮影者名と元ページは tools/photo-list.json とゲーム内クレジットに全件記載） | 各撮影者 | CC BY 2.0 | https://storage.googleapis.com/openimages/web/index.html | 正方形に切り抜き・縮小 |
+| UR 有名な建物 | Google Landmarks Dataset v2（写真は Wikimedia Commons。撮影者・ライセンス・元ページは tools/photo-list.json とゲーム内クレジットに全件記載。CC BY / CC0 / PD のみ使用、SA は不使用） | 各撮影者 | CC BY 2.0〜4.0 ほか | https://github.com/cvdfoundation/google-landmark | 正方形に切り抜き・縮小 |
+| UR 絵画 | Cooper Hewitt（広重・北斎・歌麿・春信・レンブラント・ゴッホ・ミレー・ピラネージ・ゴヤ）、Smithsonian American Art Museum（モラン・ビアスタット・スチュアート・チャーチ） | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 余白を足して正方形・縮小 |
+| UR 有名な乗り物 | National Air and Space Museum | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 余白を足して正方形・縮小 |
 | SR 写真（食べ物） | Fruits-360 | Mihai Oltean, Horea Muresan | MIT | https://github.com/Horea94/fruit-images-dataset | 拡大 |
 
 フォント：M PLUS Rounded 1c（SIL Open Font License 1.1、Google Fonts から読み込み）
 
-取得元：npm パッケージ `@iconify-json/streamline-pixel`、`@iconify-json/pixelarticons`、`@twemoji/svg`、`@lobehub/fluent-emoji-3d`／Smithsonian Open Access の AWS 公開バケット（`smithsonian-open-access`）／Open Images の AWS 公開バケット（`open-images-dataset`）とメタデータ／GitHub `Horea94/fruit-images-dataset`
+取得元：npm パッケージ `@iconify-json/streamline-pixel`、`@iconify-json/pixelarticons`、`@twemoji/svg`、`@lobehub/fluent-emoji-3d`／Smithsonian Open Access の AWS 公開バケット（`smithsonian-open-access`）／Open Images の AWS 公開バケット（`open-images-dataset`）とメタデータ／Google Landmarks Dataset v2 の AWS 公開バケット（`google-landmark`）／GitHub `Horea94/fruit-images-dataset`
 
 ---
 

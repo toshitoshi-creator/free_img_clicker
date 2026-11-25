@@ -37,7 +37,7 @@ const uniq = rank => ITEMS.filter(i => (!rank || i.rank === rank) && st.own[i.id
 let multCache = null;
 const dirty = () => { multCache = null; zukanDirty = true; };
 let zukanDirty = true;
-const RANKS = ['N', 'R', 'SR'];
+const RANKS = ['N', 'R', 'SR', 'UR'];
 const total = rank => ITEMS.filter(i => i.rank === rank).length;
 const isComp = rank => uniq(rank) === total(rank);
 // ジャンル：items.js の並び順
@@ -52,14 +52,14 @@ const isCellComp = key => cellItems(key).every(i => st.own[i.id]);
 const compBonus = () => RANKS.reduce((m, k) => m * (isComp(k) ? CONFIG.COMP_BONUS[k] : 1), 1)
   * CONFIG.GENRE_BONUS ** cells().filter(isCellComp).length;
 const mult = () => multCache ?? (multCache = calcMult());
-const calcMult = () => Math.floor((1 + uniq('N') * CONFIG.MULT.N) * (1 + uniq('R') * CONFIG.MULT.R) * (1 + uniq('SR') * CONFIG.MULT.SR) * compBonus());
-const cost = () => Math.floor(CONFIG.CAPSULE_BASE * (st.draws + 1) ** CONFIG.CAPSULE_POW);
+const calcMult = () => Math.floor(RANKS.reduce((m, k) => m * (1 + uniq(k) * CONFIG.MULT[k]), 1) * compBonus());
+const cost = () => Math.floor(CONFIG.CAPSULE_BASE * (st.draws + 1) ** CONFIG.CAPSULE_POW * (CONFIG.CAPSULE_GROW || 1) ** st.draws);
 const autoOn = () => uniq() >= CONFIG.AUTO_UNLOCK;
 const autoMs = () => Math.max(CONFIG.AUTO_MIN_MS, Math.round(CONFIG.AUTO_BASE_MS * CONFIG.AUTO_SHRINK ** (uniq() - CONFIG.AUTO_UNLOCK)));
 
 function drawOne() {
   const r = Math.random() * 100, R = CONFIG.RATE;
-  const rank = r < R.SR ? 'SR' : r < R.SR + R.R ? 'R' : 'N';
+  const rank = r < R.UR ? 'UR' : r < R.UR + R.SR ? 'SR' : r < R.UR + R.SR + R.R ? 'R' : 'N';
   const pool = ITEMS.filter(i => i.rank === rank);
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -105,10 +105,10 @@ function card(it, o = {}) {
   return `<${tag} class="card ${it.rank}${lock ? ' locked' : ''}${o.pop ? ' pop' : ''}"><span class="rk">${it.rank}</span>${o.isNew ? '<span class="new">NEW</span>' : ''}<div class="art">${artOf(it)}</div><div class="nm">${lock ? '？？？' : esc(it.name)}</div><div class="ad"><span class="atk">攻${lock ? '?' : it.atk}</span><span class="def">防${lock ? '?' : it.def}</span></div><div class="cnt">${o.grid && n ? '×' + n : esc(it.cat)}</div></${tag.split(' ')[0]}>`;
 }
 const dur = ms => { const t = Math.round(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60; return (h ? h + '時間' : '') + (h || m ? m + '分' : '') + sec + '秒'; };
-const RLBL = { N: 'N ドット', R: 'R イラスト', SR: 'SR 写真' };
+const RLBL = { N: 'N ドット', R: 'R イラスト', SR: 'SR 写真', UR: 'UR 名所・名画' };
 function showResult(got, comps = [], cellComps = []) {
   // 新規 > ランク高い順で一番いいものを大きく表示
-  const order = { SR: 3, R: 2, N: 1 };
+  const order = { UR: 4, SR: 3, R: 2, N: 1 };
   const best = got.slice().sort((a, b) => (b.isNew - a.isNew) || (order[b.it.rank] - order[a.it.rank]))[0];
   const newCount = got.filter(g => g.isNew).length;
   const msg = got.length > 1 ? `${got.length}個ゲット！${newCount ? `（新規 ${newCount}）` : ''}` : best.isNew ? '新しい素材をゲット！' : `ダブり… ×${st.own[best.it.id]}`;
@@ -143,7 +143,9 @@ function renderZukan() {
   if (gfilter !== 'ALL' && !genres().includes(gfilter)) gfilter = 'ALL';
   const inG = i => gfilter === 'ALL' || i.cat === gfilter, inR = i => filter === 'ALL' || i.rank === filter;
   $('tabs').innerHTML = ['ALL', ...RANKS].map(k => chip('data-k', k, k === 'ALL' ? 'すべて' : RLBL[k], ITEMS.filter(i => (k === 'ALL' || i.rank === k) && inG(i)), filter === k)).join('');
-  $('genres').innerHTML = ['ALL', ...genres()].map(g => chip('data-g', g, g === 'ALL' ? '全ジャンル' : g, ITEMS.filter(i => (g === 'ALL' || i.cat === g) && inR(i)), gfilter === g)).join('');
+  // 選んだランクに素材がないジャンルは出さない
+  $('genres').innerHTML = ['ALL', ...genres()].map(g => [g, ITEMS.filter(i => (g === 'ALL' || i.cat === g) && inR(i))]).filter(([g, l]) => g === 'ALL' || l.length || gfilter === g)
+    .map(([g, l]) => chip('data-g', g, g === 'ALL' ? '全ジャンル' : g, l, gfilter === g)).join('');
   $('grid').innerHTML = cells().filter(k => cellItems(k).some(i => inR(i) && inG(i))).map(k => {
     const list = cellItems(k), have = list.filter(i => st.own[i.id]).length, done = have === list.length;
     return `<h3 class="sec${done ? ' done' : ''}">${done ? '★ ' : ''}${esc(k)}<span>${have}/${list.length}</span></h3><div class="grid">${list.map(i => card(i, { grid: true })).join('')}</div>`;
@@ -180,7 +182,7 @@ document.querySelector('.tabbar').addEventListener('click', e => {
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.k; renderZukan(); $('v-zukan').scrollTop = 0; } });
 $('genres').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { gfilter = b.dataset.g; renderZukan(); $('v-zukan').scrollTop = 0; } });
 // ---- 詳細・クレジット ----
-const credit = it => it.credit ? `${esc(it.credit.author)}／${esc(it.credit.license)}${it.credit.note ? '（' + esc(it.credit.note) + '）' : ''} <a href="${esc(it.credit.url)}" target="_blank" rel="noopener">配布元</a>` : 'オリジナル';
+const credit = it => it.credit ? `${it.credit.artist ? '作：' + esc(it.credit.artist) + '<br>' : ''}${esc(it.credit.author)}／${esc(it.credit.license)}${it.credit.note ? '（' + esc(it.credit.note) + '）' : ''} <a href="${esc(it.credit.url)}" target="_blank" rel="noopener">配布元</a>` : 'オリジナル';
 const dlg = $('dlg');
 function openDlg(html) { $('dlgBody').innerHTML = html; dlg.showModal(); }
 function openDetail(id) {
@@ -192,11 +194,14 @@ $('grid').addEventListener('click', e => { const b = e.target.closest('button[da
 $('credits').addEventListener('click', () => {
   // 配布元（URL＋ライセンス）ごとにまとめる。スミソニアンは撮影者・所蔵館が複数
   const src = {};
-  const isSI = c => /si\.edu|cooperhewitt/.test(c.url), isOI = c => c.license === 'CC BY 2.0';
+  const isSI = c => /si\.edu|cooperhewitt/.test(c.url), isOI = c => c.src === 'oi', isGLD = c => c.src === 'gld';
   ITEMS.forEach(i => { const c = i.credit;
     if (isOI(c)) { // Open Images は写真ごとに撮影者と元ページを表示（CC BY 2.0 の表記）
       (src.oi = src.oi || { c: { author: 'Open Images Dataset（Flickr の各撮影者）', license: 'CC BY 2.0', url: 'https://creativecommons.org/licenses/by/2.0/', note: '正方形に切り抜き・縮小' }, list: [], authors: new Set(), each: [] }).list.push(i.name);
       src.oi.each.push(`${esc(i.name)}：<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.author.replace('（Flickr）', ''))}</a>`); return; }
+    if (isGLD(c)) { // 有名な建物は Wikimedia Commons の撮影者ごとに表示
+      (src.gld = src.gld || { c: { author: 'Google Landmarks Dataset v2（Wikimedia Commons の各撮影者）', license: 'CC BY / CC0 など（写真ごと）', url: 'https://github.com/cvdfoundation/google-landmark', note: '正方形に切り抜き・縮小' }, list: [], authors: new Set(), each: [] }).list.push(i.name);
+      src.gld.each.push(`${esc(i.name)}：<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.author.replace('（Wikimedia Commons）', ''))}</a>（${esc(c.license)}）`); return; }
     const k = isSI(c) ? 'si' : c.url + c.license; (src[k] = src[k] || { c: isSI(c) ? { author: 'Smithsonian Open Access', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に加工・縮小' } : c, list: [], authors: new Set() }).list.push(i.name); src[k].authors.add(c.author.replace('（Smithsonian Open Access）', '')); });
   openDlg(`<h3>クレジット</h3><p class="small">このゲームの${ITEMS.length}種の絵と写真は、すべて実在のフリー素材です。</p><ul class="cr">${Object.values(src).map(g => `<li><b>${esc(g.c.author)}</b><br>${esc(g.c.license)}${g.c.note ? '・' + esc(g.c.note) : ''}・<a href="${esc(g.c.url)}" target="_blank" rel="noopener">配布元</a>${g.each ? `<details><summary class="small">写真ごとの撮影者（${g.each.length}件）</summary><span class="small">${g.each.join('<br>')}</span></details>` : g.authors.size > 1 ? `<details><summary class="small">撮影・所蔵（${g.authors.size}件）</summary><span class="small">${[...g.authors].map(esc).join('<br>')}</span></details>` : ''}<details><summary class="small">使っている素材（${g.list.length}種）</summary><span class="small">${g.list.map(esc).join('、')}</span></details></li>`).join('')}</ul>`
     + `<p class="small">MIT ライセンスの素材の著作権表示と許諾文は LICENSES.md に収録しています。フォント：M PLUS Rounded 1c（SIL Open Font License）</p>`);

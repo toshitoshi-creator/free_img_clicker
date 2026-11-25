@@ -19,12 +19,14 @@ const CREDIT = {
   fr: { author: 'Mihai Oltean, Horea Muresan（Fruits-360）', license: 'MIT', url: 'https://github.com/Horea94/fruit-images-dataset', note: '拡大' },
   twp: { author: 'Twitter, Inc. ほか（Twemoji）', license: 'CC BY 4.0', url: 'https://github.com/jdecked/twemoji', note: 'ドット化' },
   nasm: { author: 'National Air and Space Museum（Smithsonian Open Access）', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に余白を足して縮小' },
+  gld: { author: '', license: '', url: '', note: '正方形に切り抜き・縮小（Google Landmarks Dataset v2 / Wikimedia Commons より）' },
+  saam: { author: 'Smithsonian American Art Museum（Smithsonian Open Access）', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に余白を足して縮小' },
   oi: { author: '', license: 'CC BY 2.0', url: 'https://creativecommons.org/licenses/by/2.0/', note: '正方形に切り抜き・縮小（Open Images Dataset より）' },
 };
 
 // ---- 攻撃・防御（対戦用）。1〜20、合計はランクごとの範囲、ジャンルで攻め寄り・守り寄りを変える ----
-const STAT_TOTAL = { N: [6, 15], R: [14, 25], SR: [22, 35] };
-const ATK_BIAS = { '動物': 0.6, '乗り物': 0.6, '食べ物': 0.5, '食器': 0.45, '家具': 0.4, '植物': 0.4 };
+const STAT_TOTAL = { N: [6, 15], R: [14, 25], SR: [22, 35], UR: [36, 40] };
+const ATK_BIAS = { '動物': 0.6, '乗り物': 0.6, '食べ物': 0.5, '食器': 0.45, '家具': 0.4, '植物': 0.4, '建物': 0.35, '自然': 0.55, 'ファッション': 0.45, '道具': 0.5, 'あそび': 0.55, '絵画': 0.5 };
 const hash = s => { let h = 2166136261; for (const c of s) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 function stats(it) {
   if (it.atk && it.def) return [it.atk, it.def]; // 一覧で手動指定があればそれを使う
@@ -123,8 +125,12 @@ function toPixelSvg(mask, n, fill, line) {
       fs.copyFileSync(f, path.join(OUT, 'images/r', it.id + '.webp')); o.img = `images/r/${it.id}.webp`;
     } else if (it.src.startsWith('photo:')) { // 写真は tools/build-photos.py で images/sr/ に作成済み
       const k = it.src.slice(6); o.img = `images/sr/${it.id}.jpg`;
-      o.credit = { ...CREDIT[k], ...((k === 'ch' || k === 'nasm') && it.url ? { url: it.url } : {}), ...(k === 'nzp' ? { author: `${it.author}（Smithsonian Open Access）` } : {}),
-        ...(k === 'oi' ? { author: `${it.author}（Flickr）`, url: it.url } : {}) };
+      o.credit = { ...CREDIT[k], ...((k === 'ch' || k === 'nasm' || k === 'saam') && it.url ? { url: it.url } : {}), ...(k === 'nzp' ? { author: `${it.author}（Smithsonian Open Access）` } : {}),
+        ...(k === 'oi' ? { author: `${it.author}（Flickr）`, url: it.url } : {}),
+        ...(k === 'gld' ? { author: `${it.author}（Wikimedia Commons）`, license: it.license, url: it.url } : {}),
+        ...((k === 'saam') && it.url ? { url: it.url } : {}) };
+      o.credit.src = k;
+      if (it.artist) o.credit.artist = it.artist;
       if (it.title) o.credit.title = it.title;
       if (!fs.existsSync(path.join(OUT, o.img))) throw new Error('photo ' + o.img);
     }
@@ -138,5 +144,5 @@ function toPixelSvg(mask, n, fill, line) {
 // 素材はすべて実在のフリー素材。出典とライセンスは各 credit と LICENSES.md を参照
 const ITEMS = [\n${items.map(o => JSON.stringify(o)).join(',\n')}\n];\n`;
   fs.writeFileSync(path.join(OUT, 'items.js'), js);
-  console.log(items.length, 'items', ['N', 'R', 'SR'].map(r => r + ':' + items.filter(i => i.rank === r).length).join(' '), [...new Set(items.map(i => i.cat))].map(c => c + ':' + items.filter(i => i.cat === c).length).join(' '));
+  console.log(items.length, 'items', ['N', 'R', 'SR', 'UR'].map(r => r + ':' + items.filter(i => i.rank === r).length).join(' '), [...new Set(items.map(i => i.cat))].map(c => c + ':' + items.filter(i => i.cat === c).length).join(' '));
 })();

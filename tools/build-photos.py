@@ -5,13 +5,15 @@
 #   食べ物: Fruits-360（Mihai Oltean, Horea Muresan, MIT）https://github.com/Horea94/fruit-images-dataset
 #   乗り物（飛行機・宇宙船）: National Air and Space Museum（Smithsonian Open Access, CC0）
 #   植物・乗り物: Open Images Dataset V4 のテスト画像（各写真の撮影者による CC BY 2.0。作者と元ページは photo-list.json）
+#   UR 建物: Google Landmarks Dataset v2（Wikimedia Commons の写真。CC BY / CC0 / PD のみ。作者・ライセンスは photo-list.json）
+#   UR 絵画: Cooper Hewitt・Smithsonian American Art Museum（Smithsonian Open Access, CC0）
 import json, os, sys, subprocess, urllib.request
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 CACHE, FRUITS = sys.argv[1], sys.argv[2]
 S3 = 'https://smithsonian-open-access.s3-us-west-2.amazonaws.com/media/'
-SIZE = 240
+SIZE = {'SR': 240, 'UR': 320}
 os.makedirs(os.path.join(ROOT, 'images/sr'), exist_ok=True)
 os.makedirs(CACHE, exist_ok=True)
 
@@ -23,27 +25,34 @@ def fetch(it):
         if not os.path.exists(p):
             open(p, 'wb').write(subprocess.run(['git', '-C', FRUITS, 'show', f'HEAD:{d}/{names[39]}'], capture_output=True, check=True).stdout)
         return p
+    if it['src'] == 'gld':  # tar から Range で1枚だけ取り出す
+        p = os.path.join(CACHE, it['media'] + '.jpg')
+        if not os.path.exists(p):
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import gld_fetch
+            open(p, 'wb').write(gld_fetch.fetch(it['media']))
+        return p
     if it['src'] == 'oi':
         p = os.path.join(CACHE, it['media'] + '.jpg')
         if not os.path.exists(p):
             open(p, 'wb').write(urllib.request.urlopen(f"https://open-images-dataset.s3.amazonaws.com/test/{it['media']}.jpg", timeout=120).read())
         return p
-    unit = {'nzp': 'nzp', 'ch': 'chsdm', 'nasm': 'nasm'}[it['src']]
+    unit = {'nzp': 'nzp', 'ch': 'chsdm', 'nasm': 'nasm', 'saam': 'saam'}[it['src']]
     p = os.path.join(CACHE, it['media'] + '.jpg')
     if not os.path.exists(p):
         open(p, 'wb').write(urllib.request.urlopen(f"{S3}{unit}/{it['media']}.jpg", timeout=120).read())
     return p
 
 for it in json.load(open(os.path.join(ROOT, 'tools/photo-list.json'), encoding='utf-8')):
-    im = Image.open(fetch(it)); im.draft('RGB', (SIZE * 4, SIZE * 4)); im = im.convert('RGB')
+    S = SIZE[it.get('rank', 'SR')]
+    im = Image.open(fetch(it)); im.draft('RGB', (S * 4, S * 4)); im = im.convert('RGB')
     w, h = im.size
-    if it['src'] in ('nzp', 'oi'):  # 動物・植物・乗り物の写真：主役が入るように正方形に切り抜き
+    if it['src'] in ('nzp', 'oi', 'gld'):  # 動物・植物・乗り物の写真：主役が入るように正方形に切り抜き
         m = min(w, h); cx, cy = it.get('fx', .5) * w, it.get('fy', .5) * h
         x = min(max(0, cx - m / 2), w - m); y = min(max(0, cy - m / 2), h - m)
         im = im.crop((int(x), int(y), int(x + m), int(y + m)))
-    elif it['src'] in ('ch', 'nasm'):  # 博物館の収蔵品：背景色で正方形に余白を足して全体を見せる
+    elif it['src'] in ('ch', 'nasm', 'saam'):  # 博物館の収蔵品：背景色で正方形に余白を足して全体を見せる
         px = [im.getpixel(p) for p in [(2, 2), (w - 3, 2), (2, h - 3), (w - 3, h - 3)]]
         bg = tuple(sum(c[i] for c in px) // 4 for i in range(3))
         m = max(w, h); sq = Image.new('RGB', (m, m), bg); sq.paste(im, ((m - w) // 2, (m - h) // 2)); im = sq
-    im.resize((SIZE, SIZE), Image.LANCZOS).save(os.path.join(ROOT, 'images/sr', it['id'] + '.jpg'), quality=80, optimize=True, progressive=True)
+    im.resize((S, S), Image.LANCZOS).save(os.path.join(ROOT, 'images/sr', it['id'] + '.jpg'), quality=80, optimize=True, progressive=True)
 print('ok')

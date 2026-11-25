@@ -47,12 +47,18 @@ button{font:inherit;color:inherit}
 .card .art{aspect-ratio:1;border-radius:9px;background:#f3efe6;display:grid;place-items:center;overflow:hidden}
 .card .art svg,.card .art img{width:100%;height:100%;display:block;object-fit:contain}
 .card .art img.px{image-rendering:pixelated;image-rendering:crisp-edges;padding:6%}
-.SR .art img{object-fit:cover}
+.SR .art img,.UR .art img{object-fit:cover}
 
 .card .nm{font-weight:800;margin-top:4px;line-height:1.3}
 .N{background:linear-gradient(135deg,#e0a77a,#b5703f)}
 .R{background:linear-gradient(135deg,#f4f6fa,#a9b3c4)}
 .SR{background:linear-gradient(135deg,#fff1a8,#e0aa1c 60%,#fff1a8)}
+/* UR は虹色にゆっくり光る */
+.UR{background:linear-gradient(120deg,#ff7eb3,#ffd36e,#7cf2c8,#7aa8ff,#d48bff,#ff7eb3);background-size:300% 300%;animation:ur 6s linear infinite}
+.UR .rk{background:linear-gradient(90deg,#d6338a,#7a3ff0)}
+@keyframes ur{to{background-position:300% 0}}
+@media(prefers-reduced-motion:reduce){.UR{animation:none}}
+.locked.UR{animation:none}
 .rk{position:absolute;top:-10px;left:-10px;background:var(--line);color:#fff;font-weight:800;font-size:12px;padding:1px 8px;border-radius:9px}
 .new{position:absolute;top:-10px;right:-10px;background:var(--red);color:#fff;font-weight:800;font-size:12px;padding:1px 7px;border-radius:9px}
 .pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
