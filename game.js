@@ -23,12 +23,17 @@ function placeholder(it) {
 const artOf = it => it.img ? `<img src="${esc(it.img)}" alt="" style="width:100%;height:100%;object-fit:cover">` : (it.art || placeholder(it));
 
 // ---- 状態 ----
-let st = { taps: 0, points: 0, draws: 0, own: {} };
+const fresh = () => ({ taps: 0, points: 0, draws: 0, own: {}, start: 0, clearedAt: 0 });
+let st = fresh();
 try { const s = JSON.parse(localStorage.getItem(CONFIG.SAVE_KEY)); if (s && typeof s.points === 'number') st = Object.assign(st, s); } catch (e) {}
 const save = () => { try { localStorage.setItem(CONFIG.SAVE_KEY, JSON.stringify(st)); } catch (e) {} };
 
 const uniq = rank => ITEMS.filter(i => (!rank || i.rank === rank) && st.own[i.id]).length;
-const mult = () => Math.floor((1 + uniq('N') * CONFIG.MULT.N) * (1 + uniq('R') * CONFIG.MULT.R) * (1 + uniq('SR') * CONFIG.MULT.SR));
+const RANKS = ['N', 'R', 'SR'];
+const total = rank => ITEMS.filter(i => i.rank === rank).length;
+const isComp = rank => uniq(rank) === total(rank);
+const compBonus = () => RANKS.reduce((m, k) => m * (isComp(k) ? CONFIG.COMP_BONUS[k] : 1), 1);
+const mult = () => Math.floor((1 + uniq('N') * CONFIG.MULT.N) * (1 + uniq('R') * CONFIG.MULT.R) * (1 + uniq('SR') * CONFIG.MULT.SR) * compBonus());
 const cost = () => Math.floor(CONFIG.CAPSULE_BASE * (st.draws + 1) ** CONFIG.CAPSULE_POW);
 const autoOn = () => uniq() >= CONFIG.AUTO_UNLOCK;
 const autoMs = () => Math.max(CONFIG.AUTO_MIN_MS, Math.round(CONFIG.AUTO_BASE_MS * CONFIG.AUTO_SHRINK ** (uniq() - CONFIG.AUTO_UNLOCK)));
@@ -43,8 +48,9 @@ function drawOne() {
 // ---- 1タップ分（手動・自動共通） ----
 function tap(isAuto) {
   if (!isAuto) st.taps++;
+  if (!st.start) st.start = Date.now();
   st.points += mult();
-  const got = [];
+  const got = [], before = RANKS.filter(isComp);
   while (st.points >= cost() && got.length < CONFIG.MAX_DRAWS_PER_TICK) {
     st.points -= cost(); st.draws++;
     const it = drawOne(), isNew = !st.own[it.id];
@@ -52,7 +58,9 @@ function tap(isAuto) {
     got.push({ it, isNew });
     if (isNew) ensureAuto(); // 種類が増えたら自動クリックの間隔を更新
   }
-  if (got.length) showResult(got);
+  const comps = RANKS.filter(k => isComp(k) && !before.includes(k));
+  if (comps.length && uniq() === ITEMS.length && !st.clearedAt) st.clearedAt = Date.now();
+  if (got.length) showResult(got, comps);
   save(); render();
 }
 
@@ -70,15 +78,20 @@ function ensureAuto() {
 let filter = 'ALL';
 function card(it, o = {}) {
   const n = st.own[it.id] || 0, lock = o.grid && !n;
-  return `<div class="card ${it.rank}${lock ? ' locked' : ''}${o.pop ? ' pop' : ''}"><span class="rk">${it.rank}</span>${o.isNew ? '<span class="new">NEW</span>' : ''}<div class="art">${artOf(it)}</div><div class="nm">${lock ? '？？？' : esc(it.name)}</div><div class="cnt">${o.grid && !lock ? '×' + n : esc(it.cat)}</div></div>`;
+  const tag = o.grid && !lock ? `button type="button" data-id="${it.id}" aria-label="${esc(it.name)}の詳細"` : 'div';
+  return `<${tag} class="card ${it.rank}${lock ? ' locked' : ''}${o.pop ? ' pop' : ''}"><span class="rk">${it.rank}</span>${o.isNew ? '<span class="new">NEW</span>' : ''}<div class="art">${artOf(it)}</div><div class="nm">${lock ? '？？？' : esc(it.name)}</div><div class="cnt">${o.grid && !lock ? '×' + n : esc(it.cat)}</div></${tag.split(' ')[0]}>`;
 }
-function showResult(got) {
+const dur = ms => { const t = Math.round(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60; return (h ? h + '時間' : '') + (h || m ? m + '分' : '') + sec + '秒'; };
+const RLBL = { N: 'N ドット', R: 'R イラスト', SR: 'SR 写真' };
+function showResult(got, comps = []) {
   // 新規 > ランク高い順で一番いいものを大きく表示
   const order = { SR: 3, R: 2, N: 1 };
   const best = got.slice().sort((a, b) => (b.isNew - a.isNew) || (order[b.it.rank] - order[a.it.rank]))[0];
   const newCount = got.filter(g => g.isNew).length;
   const msg = got.length > 1 ? `${got.length}個ゲット！${newCount ? `（新規 ${newCount}）` : ''}` : best.isNew ? '新しい素材をゲット！' : `ダブり… ×${st.own[best.it.id]}`;
-  $('stage').innerHTML = card(best.it, { pop: true, isNew: best.isNew }) + `<p class="empty">${msg}</p>`;
+  let extra = comps.map(k => `<p class="comp">${RLBL[k]} コンプリート！ 倍率 ×${CONFIG.COMP_BONUS[k]}</p>`).join('');
+  if (comps.length && st.clearedAt) extra = `<p class="comp all">🎉 全${ITEMS.length}種コンプリート！</p><p class="empty">${dur(st.clearedAt - st.start)}・${fmt(st.taps)}タップ・${fmt(st.draws)}回</p>`;
+  $('stage').innerHTML = card(best.it, { pop: true, isNew: best.isNew }) + `<p class="empty">${msg}</p>` + extra;
 }
 function render() {
   $('pts').textContent = fmt(st.points);
@@ -89,21 +102,45 @@ function render() {
   $('hint').textContent = `次のカプセルまで ${fmt(Math.max(0, c - st.points))} pt（1個 ${fmt(c)} pt）`;
   $('auto').textContent = autoOn() ? `自動クリック ON：${(autoMs() / 1000).toFixed(2)}秒ごと` : `自動クリック：あと${CONFIG.AUTO_UNLOCK - uniq()}種類で解放`;
   $('auto').classList.toggle('on', autoOn());
-  const lbl = { ALL: 'すべて', N: 'N ドット', R: 'R イラスト', SR: 'SR 写真' };
+  const cb = compBonus();
+  $('bonus').textContent = cb > 1 ? `コンプボーナス ×${cb}` : '';
+  $('bonus').hidden = cb === 1;
+  $('clear').hidden = !st.clearedAt;
+  if (st.clearedAt) $('clear').textContent = `🎉 全種コンプ記録：${dur(st.clearedAt - st.start)}（${fmt(st.taps)}タップ・${fmt(st.draws)}回）`;
+  const lbl = { ALL: 'すべて', ...RLBL };
   $('tabs').innerHTML = Object.keys(lbl).map(k => {
     const list = k === 'ALL' ? ITEMS : ITEMS.filter(i => i.rank === k);
-    return `<button type="button" data-k="${k}" aria-pressed="${filter === k}">${lbl[k]} ${list.filter(i => st.own[i.id]).length}/${list.length}</button>`;
+    const have = list.filter(i => st.own[i.id]).length;
+    return `<button type="button" data-k="${k}" aria-pressed="${filter === k}">${have === list.length ? '★ ' : ''}${lbl[k]} ${have}/${list.length}</button>`;
   }).join('');
   $('grid').innerHTML = ITEMS.filter(i => filter === 'ALL' || i.rank === filter).map(i => card(i, { grid: true })).join('');
 }
 
 $('btn').addEventListener('click', () => tap(false));
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.k; render(); } });
+// ---- 詳細・クレジット ----
+const credit = it => it.credit ? `${esc(it.credit.author || '')}${it.credit.license ? '（' + esc(it.credit.license) + '）' : ''}${it.credit.url ? ` <a href="${esc(it.credit.url)}" target="_blank" rel="noopener">出典</a>` : ''}` : 'オリジナル（本作用に描き下ろし）';
+const dlg = $('dlg');
+function openDlg(html) { $('dlgBody').innerHTML = html; dlg.showModal(); }
+$('grid').addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  const it = ITEMS.find(i => i.id === b.dataset.id);
+  openDlg(card(it) + `<dl class="info"><dt>ランク</dt><dd>${RLBL[it.rank]}</dd><dt>カテゴリ</dt><dd>${esc(it.cat)}</dd><dt>所持数</dt><dd>${fmt(st.own[it.id])}</dd><dt>素材</dt><dd>${credit(it)}</dd></dl>`);
+});
+$('credits').addEventListener('click', () => {
+  const ext = ITEMS.filter(i => i.credit);
+  openDlg(`<h3>クレジット</h3><p>${ext.length ? '外部素材を使用しています。' : `現在の${ITEMS.length}種の絵はすべて本作用のオリジナルです。`}</p>`
+    + (ext.length ? `<ul class="cr">${ext.map(i => `<li><b>${esc(i.name)}</b>：${credit(i)}</li>`).join('')}</ul>` : '')
+    + `<p class="small">フォント：M PLUS Rounded 1c（SIL Open Font License）</p>`);
+});
+$('dlgClose').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
 let armed = false;
 $('reset').addEventListener('click', () => {
   if (!armed) { armed = true; $('reset').textContent = 'もう一度押すとリセット'; setTimeout(() => { armed = false; $('reset').textContent = 'データをリセット'; }, 3000); return; }
   clearInterval(timer); timer = null; timerMs = 0;
-  st = { taps: 0, points: 0, draws: 0, own: {} }; save(); armed = false;
+  st = fresh(); save(); armed = false;
   $('reset').textContent = 'データをリセット';
   $('stage').innerHTML = '<p class="empty">ここに出てきた素材が表示されます</p>';
   render();

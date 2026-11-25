@@ -23,16 +23,19 @@
 <div class="meter" aria-hidden="true"><i id="bar"></i></div>
 <p class="hint" id="hint"></p>
 <p class="auto" id="auto"></p>
+<p class="auto on" id="bonus" hidden></p>
 </section>
 <section class="stage" id="stage" aria-live="polite">
 <p class="empty">ここに出てきた素材が表示されます</p>
 </section>
 </div>
-<p class="rates">出現率：N（ドット絵）70% ／ R（イラスト）25% ／ SR（写真）5%　倍率：N 1種ごと+1、R 1種ごと+0.25、SR 1種ごと+2 の掛け算（最大 約988倍）</p>
+<p class="rates">出現率：N（ドット絵）70% ／ R（イラスト）25% ／ SR（写真）5%　倍率：N 1種ごと+1、R 1種ごと+0.25、SR 1種ごと+2 の掛け算。ランクをコンプすると N ×2・R ×3・SR ×5 のボーナス</p>
+<p class="clear" id="clear" hidden></p>
 <h2>図鑑</h2>
 <div class="tabs" id="tabs"></div>
 <div class="grid" id="grid"></div>
-<div class="foot"><span>絵はすべて仮素材です（items.js の img に画像パスを入れると差し替わります）</span><button class="reset" id="reset" type="button">データをリセット</button></div>
+<div class="foot"><span>図鑑のカードを押すと詳細が見られます</span><span class="btns"><button class="reset" id="credits" type="button">クレジット</button><button class="reset" id="reset" type="button">データをリセット</button></span></div>
+<dialog id="dlg"><div id="dlgBody"></div><button class="reset" id="dlgClose" type="button">とじる</button></dialog>
 </main>
 <script src="config.js"></script>
 <script src="items.js"></script>
