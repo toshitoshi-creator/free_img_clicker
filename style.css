@@ -1,0 +1,54 @@
+/* VOICE: 明るく遊べる、駄菓子屋のガチャ機
+   IDEA: カプセルトイの筐体。押すほどカプセルが貯まり、10回で1個出る
+   PICTURE: 大きな丸ボタン＋出てきたカード。図鑑は枠色でランクが分かる
+   COLOUR/TYPE: ガチャ赤 #e8433a、黄 #ffcf3a、墨。M PLUS Rounded 1c
+   LAYOUT: 上に筐体とカード、下に図鑑。スマホは縦積み */
+:root{color-scheme:light dark;--bg:light-dark(#ffcf3a,#1d1a2e);--ink:light-dark(#2a1a12,#f6efe4);--panel:light-dark(#fff8e6,#2a2640);--red:#e8433a;--line:light-dark(#2a1a12,#0d0b16)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "M PLUS Rounded 1c",system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+.band{padding:clamp(20px,4vw,48px) max(5vw,16px);max-width:1100px;margin:0 auto}
+h1{font-size:clamp(28px,6vw,44px);line-height:1.05;margin:0 0 4px;font-weight:800}
+.sub{margin:0 0 20px;font-size:14px;opacity:.8}
+.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:stretch}
+@media(max-width:700px){.top{grid-template-columns:minmax(0,1fr)}}
+.machine{background:var(--red);border:4px solid var(--line);border-radius:28px;padding:22px;color:#fff;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 8px 0 var(--line)}
+.stats{display:flex;gap:10px;width:100%;flex-wrap:wrap}
+.stat{flex:1;background:rgba(0,0,0,.18);border-radius:14px;padding:8px 12px}
+.stat b{display:block;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px}
+#btn{width:min(220px,60vw);aspect-ratio:1;border-radius:50%;border:5px solid var(--line);background:radial-gradient(circle at 35% 30%,#fff7c9,#ffcf3a 45%,#e9a400);font:800 24px "M PLUS Rounded 1c",sans-serif;color:#2a1a12;cursor:pointer;box-shadow:0 10px 0 var(--line);transition:transform .06s,box-shadow .06s;touch-action:manipulation}
+#btn:active{transform:translateY(8px);box-shadow:0 2px 0 var(--line)}
+#btn:focus-visible{outline:4px solid #fff;outline-offset:4px}
+.meter{width:100%;height:18px;background:rgba(0,0,0,.25);border-radius:9px;overflow:hidden;border:3px solid var(--line)}
+.meter i{display:block;height:100%;background:#fff;width:0;transition:width .1s}
+.hint{font-size:14px;margin:0}
+.stage{background:var(--panel);border:4px solid var(--line);border-radius:28px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:340px;box-shadow:0 8px 0 var(--line)}
+.card{width:190px;border-radius:18px;padding:10px;border:4px solid var(--line);background:#fff;color:#2a1a12;text-align:center;position:relative}
+.card .art{aspect-ratio:1;border-radius:10px;background:#f3efe6;display:grid;place-items:center;overflow:hidden}
+.card .art svg{width:100%;height:100%}
+.card .nm{font-weight:800;margin-top:6px}
+.N{background:linear-gradient(135deg,#e0a77a,#b5703f)}
+.R{background:linear-gradient(135deg,#f4f6fa,#a9b3c4)}
+.SR{background:linear-gradient(135deg,#fff1a8,#e0aa1c 60%,#fff1a8)}
+.rk{position:absolute;top:-12px;left:-12px;background:var(--line);color:#fff;font-weight:800;font-size:14px;padding:2px 10px;border-radius:10px}
+.new{position:absolute;top:-12px;right:-12px;background:var(--red);color:#fff;font-weight:800;font-size:13px;padding:2px 8px;border-radius:10px}
+.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.3) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.pop{animation:none}}
+.empty{opacity:.7;text-align:center}
+h2{font-size:24px;margin:28px 0 10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button,.reset{min-height:44px;padding:0 16px;border-radius:22px;border:3px solid var(--line);background:var(--panel);color:var(--ink);font:800 15px "M PLUS Rounded 1c",sans-serif;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--line);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
+.grid .card{width:auto;padding:7px;border-width:3px}
+.grid .card .nm{font-size:14px}
+.cnt{font-size:13px;opacity:.75}
+.locked .art{filter:brightness(0) opacity(.18)}
+.rates{font-size:14px;margin:14px 0 0}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:24px;font-size:13px;opacity:.85}
+.stat b{font-size:clamp(18px,4vw,26px);overflow-wrap:anywhere}
+.auto{margin:0;font-size:14px;font-weight:800;background:rgba(0,0,0,.2);padding:6px 14px;border-radius:14px}
+.auto.on{background:#fff;color:#2a1a12}
+.card .art img{display:block}

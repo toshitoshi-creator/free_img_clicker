@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>素材ガチャクリッカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="band">
+<h1>素材ガチャクリッカー</h1>
+<p class="sub">タップでポイントを貯めてカプセルを引こう。集めた種類が多いほど1タップの倍率が上がる</p>
+<div class="top">
+<section class="machine" aria-label="ガチャ機">
+<div class="stats">
+<div class="stat"><b id="pts">0</b><span>ポイント</span></div>
+<div class="stat"><b id="mult">×1</b><span>1タップの倍率</span></div>
+<div class="stat"><b id="done">0/0</b><span>図鑑</span></div>
+</div>
+<button id="btn" type="button">タップ!</button>
+<div class="meter" aria-hidden="true"><i id="bar"></i></div>
+<p class="hint" id="hint"></p>
+<p class="auto" id="auto"></p>
+</section>
+<section class="stage" id="stage" aria-live="polite">
+<p class="empty">ここに出てきた素材が表示されます</p>
+</section>
+</div>
+<p class="rates">出現率：N（ドット絵）70% ／ R（イラスト）25% ／ SR（写真）5%　倍率：N 1種ごと+1、R 1種ごと+0.25、SR 1種ごと+2 の掛け算（最大 約988倍）</p>
+<h2>図鑑</h2>
+<div class="tabs" id="tabs"></div>
+<div class="grid" id="grid"></div>
+<div class="foot"><span>絵はすべて仮素材です（items.js の img に画像パスを入れると差し替わります）</span><button class="reset" id="reset" type="button">データをリセット</button></div>
+</main>
+<script src="config.js"></script>
+<script src="items.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
