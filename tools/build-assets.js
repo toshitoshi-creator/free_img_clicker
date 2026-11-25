@@ -25,7 +25,8 @@ const CREDIT = {
 };
 
 // ---- 攻撃・防御（対戦用）。1〜20、合計はランクごとの範囲、ジャンルで攻め寄り・守り寄りを変える ----
-const STAT_TOTAL = { N: [6, 15], R: [14, 25], SR: [22, 35], UR: [36, 40] };
+const STAT_TOTAL = { N: [6, 15], R: [14, 25], SR: [22, 30], 'SR+': [31, 35], UR: [36, 40] };
+const ATK_MAX = { N: 10, R: 15, SR: 20, 'SR+': 18, UR: 20 }; // 攻撃の上限（防御はどのランクも20まで）
 const ATK_BIAS = { '動物': 0.6, '乗り物': 0.6, '食べ物': 0.5, '食器': 0.45, '家具': 0.4, '植物': 0.4, '建物': 0.35, '自然': 0.55, 'ファッション': 0.45, '道具': 0.5, 'あそび': 0.55, '絵画': 0.5 };
 const hash = s => { let h = 2166136261; for (const c of s) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 function stats(it) {
@@ -34,7 +35,7 @@ function stats(it) {
   const [lo, hi] = STAT_TOTAL[it.rank], total = lo + Math.floor(r1 * (hi - lo + 1));
   const ratio = Math.min(0.85, Math.max(0.15, (ATK_BIAS[it.cat] ?? 0.5) + (r2 - 0.5) * 0.5));
   let atk = Math.round(total * ratio);
-  atk = Math.min(20, Math.max(1, atk, total - 20)); atk = Math.min(atk, total - 1);
+  atk = Math.min(ATK_MAX[it.rank], Math.max(1, atk, total - 20)); atk = Math.min(atk, total - 1);
   return [atk, total - atk];
 }
 // 絵文字ファイル名の揺れ（fe0f の有無）を吸収して探す
@@ -139,10 +140,10 @@ function toPixelSvg(mask, n, fill, line) {
   await b.close();
   const dup = (k) => items.map(i => i[k]).filter((v, i, a) => a.indexOf(v) !== i);
   if (dup('id').length || dup('name').length) throw new Error('重複: ' + dup('id') + ' / ' + dup('name'));
-  for (const i of items) { const t = i.atk + i.def, [lo, hi] = STAT_TOTAL[i.rank]; if (i.atk < 1 || i.def < 1 || i.atk > 20 || i.def > 20 || t < lo || t > hi) throw new Error('能力値が範囲外: ' + i.name); }
+  for (const i of items) { const t = i.atk + i.def, [lo, hi] = STAT_TOTAL[i.rank]; if (i.atk < 1 || i.def < 1 || i.atk > ATK_MAX[i.rank] || i.def > 20 || t < lo || t > hi) throw new Error('能力値が範囲外: ' + i.name); }
   const js = `// 自動生成：node tools/build-assets.js（元データは tools/asset-list.js）
 // 素材はすべて実在のフリー素材。出典とライセンスは各 credit と LICENSES.md を参照
 const ITEMS = [\n${items.map(o => JSON.stringify(o)).join(',\n')}\n];\n`;
   fs.writeFileSync(path.join(OUT, 'items.js'), js);
-  console.log(items.length, 'items', ['N', 'R', 'SR', 'UR'].map(r => r + ':' + items.filter(i => i.rank === r).length).join(' '), [...new Set(items.map(i => i.cat))].map(c => c + ':' + items.filter(i => i.cat === c).length).join(' '));
+  console.log(items.length, 'items', ['N', 'R', 'SR', 'SR+', 'UR'].map(r => r + ':' + items.filter(i => i.rank === r).length).join(' '), [...new Set(items.map(i => i.cat))].map(c => c + ':' + items.filter(i => i.cat === c).length).join(' '));
 })();

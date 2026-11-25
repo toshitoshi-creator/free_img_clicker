@@ -37,7 +37,8 @@ const uniq = rank => ITEMS.filter(i => (!rank || i.rank === rank) && st.own[i.id
 let multCache = null;
 const dirty = () => { multCache = null; zukanDirty = true; };
 let zukanDirty = true;
-const RANKS = ['N', 'R', 'SR', 'UR'];
+const RANKS = ['N', 'R', 'SR', 'SR+', 'UR'];
+const rcls = r => r.replace('+', 'P'); // CSS クラス名（SR+ → SRP）
 const total = rank => ITEMS.filter(i => i.rank === rank).length;
 const isComp = rank => uniq(rank) === total(rank);
 // ジャンル：items.js の並び順
@@ -59,7 +60,8 @@ const autoMs = () => Math.max(CONFIG.AUTO_MIN_MS, Math.round(CONFIG.AUTO_BASE_MS
 
 function drawOne() {
   const r = Math.random() * 100, R = CONFIG.RATE;
-  const rank = r < R.UR ? 'UR' : r < R.UR + R.SR ? 'SR' : r < R.UR + R.SR + R.R ? 'R' : 'N';
+  let acc = 0, rank = 'N';
+  for (const k of [...RANKS].reverse()) { acc += R[k]; if (r < acc) { rank = k; break; } } // レアなランクから順に判定
   const pool = ITEMS.filter(i => i.rank === rank);
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -102,13 +104,13 @@ let filter = 'ALL';
 function card(it, o = {}) {
   const n = st.own[it.id] || 0, lock = o.grid && !n && !o.mine;
   const tag = o.grid && !lock ? `button type="button" data-id="${it.id}" aria-label="${esc(it.name)}の詳細"` : 'div';
-  return `<${tag} class="card ${it.rank}${lock ? ' locked' : ''}${o.pop ? ' pop' : ''}"><span class="rk">${it.rank}</span>${o.isNew ? '<span class="new">NEW</span>' : ''}<div class="art">${artOf(it)}</div><div class="nm">${lock ? '？？？' : esc(it.name)}</div><div class="ad"><span class="atk">攻${lock ? '?' : it.atk}</span><span class="def">防${lock ? '?' : it.def}</span></div><div class="cnt">${o.grid && n ? '×' + n : esc(it.cat)}</div></${tag.split(' ')[0]}>`;
+  return `<${tag} class="card ${rcls(it.rank)}${lock ? ' locked' : ''}${o.pop ? ' pop' : ''}"><span class="rk">${it.rank}</span>${o.isNew ? '<span class="new">NEW</span>' : ''}<div class="art">${artOf(it)}</div><div class="nm">${lock ? '？？？' : esc(it.name)}</div><div class="ad"><span class="atk">攻${lock ? '?' : it.atk}</span><span class="def">防${lock ? '?' : it.def}</span></div><div class="cnt">${o.grid && n ? '×' + n : esc(it.cat)}</div></${tag.split(' ')[0]}>`;
 }
 const dur = ms => { const t = Math.round(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60; return (h ? h + '時間' : '') + (h || m ? m + '分' : '') + sec + '秒'; };
-const RLBL = { N: 'N ドット', R: 'R イラスト', SR: 'SR 写真', UR: 'UR 名所・名画' };
+const RLBL = { N: 'N ドット', R: 'R イラスト', SR: 'SR 写真', 'SR+': 'SR+ 人気・貴重', UR: 'UR 名所・名画' };
 function showResult(got, comps = [], cellComps = []) {
   // 新規 > ランク高い順で一番いいものを大きく表示
-  const order = { UR: 4, SR: 3, R: 2, N: 1 };
+  const order = { UR: 5, 'SR+': 4, SR: 3, R: 2, N: 1 };
   const best = got.slice().sort((a, b) => (b.isNew - a.isNew) || (order[b.it.rank] - order[a.it.rank]))[0];
   const newCount = got.filter(g => g.isNew).length;
   const msg = got.length > 1 ? `${got.length}個ゲット！${newCount ? `（新規 ${newCount}）` : ''}` : best.isNew ? '新しい素材をゲット！' : `ダブり… ×${st.own[best.it.id]}`;
