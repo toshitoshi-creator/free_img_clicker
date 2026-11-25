@@ -61,6 +61,7 @@ function tap(isAuto) {
   const comps = RANKS.filter(k => isComp(k) && !before.includes(k));
   if (comps.length && uniq() === ITEMS.length && !st.clearedAt) st.clearedAt = Date.now();
   if (got.length) showResult(got, comps);
+  if (got.some(g => g.isNew) && view !== 'zukan') $('newdot').hidden = false;
   save(); render();
 }
 
@@ -106,6 +107,7 @@ function render() {
   $('bonus').textContent = cb > 1 ? `コンプボーナス ×${cb}` : '';
   $('bonus').hidden = cb === 1;
   $('clear').hidden = !st.clearedAt;
+  $('record').innerHTML = `<dt>タップ数</dt><dd>${fmt(st.taps)}</dd><dt>ガチャ回数</dt><dd>${fmt(st.draws)}</dd><dt>次の1個</dt><dd>${fmt(c)} pt</dd><dt>プレイ開始</dt><dd>${st.start ? new Date(st.start).toLocaleString('ja-JP') : '—'}</dd>`;
   if (st.clearedAt) $('clear').textContent = `🎉 全種コンプ記録：${dur(st.clearedAt - st.start)}（${fmt(st.taps)}タップ・${fmt(st.draws)}回）`;
   const lbl = { ALL: 'すべて', ...RLBL };
   $('tabs').innerHTML = Object.keys(lbl).map(k => {
@@ -116,7 +118,35 @@ function render() {
   $('grid').innerHTML = ITEMS.filter(i => filter === 'ALL' || i.rank === filter).map(i => card(i, { grid: true })).join('');
 }
 
-$('btn').addEventListener('click', () => tap(false));
+// ---- タップボタン：指を置いた瞬間に反応（連打・複数指OK）。キーボードは click で ----
+const btn = $('btn'), fx = $('fx');
+function floatText(x, y) {
+  const el = document.createElement('span');
+  el.className = 'plus'; el.textContent = '+' + fmt(mult());
+  const r = fx.getBoundingClientRect();
+  el.style.left = (x - r.left + (Math.random() * 30 - 15)) + 'px'; el.style.top = (y - r.top - 20) + 'px';
+  fx.appendChild(el); setTimeout(() => el.remove(), 700);
+  while (fx.childElementCount > 12) fx.firstChild.remove();
+}
+btn.addEventListener('pointerdown', e => {
+  if (e.button > 0) return;
+  e.preventDefault();
+  floatText(e.clientX, e.clientY); tap(false);
+  btn.classList.add('press');
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(t => btn.addEventListener(t, () => btn.classList.remove('press')));
+btn.addEventListener('click', e => { if (e.detail === 0) { const r = btn.getBoundingClientRect(); floatText(r.left + r.width / 2, r.top + r.height / 2); tap(false); } });
+btn.addEventListener('contextmenu', e => e.preventDefault());
+
+// ---- 画面切り替え（下のタブバー） ----
+let view = 'gacha';
+document.querySelector('.tabbar').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  view = b.dataset.v;
+  document.querySelectorAll('.tabbar button').forEach(x => x === b ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current'));
+  document.querySelectorAll('.view').forEach(v => { const on = v.id === 'v-' + view; v.hidden = !on; v.classList.toggle('active', on); });
+  if (view === 'zukan') $('newdot').hidden = true;
+});
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.k; render(); } });
 // ---- 詳細・クレジット ----
 const credit = it => it.credit ? `${esc(it.credit.author || '')}${it.credit.license ? '（' + esc(it.credit.license) + '）' : ''}${it.credit.url ? ` <a href="${esc(it.credit.url)}" target="_blank" rel="noopener">出典</a>` : ''}` : 'オリジナル（本作用に描き下ろし）';
@@ -142,7 +172,7 @@ $('reset').addEventListener('click', () => {
   clearInterval(timer); timer = null; timerMs = 0;
   st = fresh(); save(); armed = false;
   $('reset').textContent = 'データをリセット';
-  $('stage').innerHTML = '<p class="empty">ここに出てきた素材が表示されます</p>';
+  $('stage').innerHTML = '<p class="empty">タップでポイントを貯めると<br>カプセルが出てくるよ</p>';
   render();
 });
 ensureAuto(); render();

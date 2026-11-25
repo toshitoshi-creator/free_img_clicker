@@ -2,41 +2,68 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e8433a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>素材ガチャクリッカー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="band">
-<h1>素材ガチャクリッカー</h1>
-<p class="sub">タップでポイントを貯めてカプセルを引こう。集めた種類が多いほど1タップの倍率が上がる</p>
-<div class="top">
-<section class="machine" aria-label="ガチャ機">
-<div class="stats">
+<div class="app">
+<header class="hud">
 <div class="stat"><b id="pts">0</b><span>ポイント</span></div>
-<div class="stat"><b id="mult">×1</b><span>1タップの倍率</span></div>
+<div class="stat"><b id="mult">×1</b><span>倍率</span></div>
 <div class="stat"><b id="done">0/0</b><span>図鑑</span></div>
+</header>
+
+<main class="views">
+<section class="view active" id="v-gacha" aria-label="ガチャ">
+<div class="stage" id="stage" aria-live="polite">
+<p class="empty">タップでポイントを貯めると<br>カプセルが出てくるよ</p>
 </div>
-<button id="btn" type="button">タップ!</button>
+<div class="machine">
+<div class="chips"><p class="chip" id="auto"></p><p class="chip on" id="bonus" hidden></p></div>
 <div class="meter" aria-hidden="true"><i id="bar"></i></div>
 <p class="hint" id="hint"></p>
-<p class="auto" id="auto"></p>
-<p class="auto on" id="bonus" hidden></p>
-</section>
-<section class="stage" id="stage" aria-live="polite">
-<p class="empty">ここに出てきた素材が表示されます</p>
-</section>
+<div class="btnwrap"><button id="btn" type="button">タップ!</button><div id="fx" aria-hidden="true"></div></div>
 </div>
-<p class="rates">出現率：N（ドット絵）70% ／ R（イラスト）25% ／ SR（写真）5%　倍率：N 1種ごと+1、R 1種ごと+0.25、SR 1種ごと+2 の掛け算。ランクをコンプすると N ×2・R ×3・SR ×5 のボーナス</p>
-<p class="clear" id="clear" hidden></p>
-<h2>図鑑</h2>
+</section>
+
+<section class="view" id="v-zukan" aria-label="図鑑" hidden>
 <div class="tabs" id="tabs"></div>
 <div class="grid" id="grid"></div>
-<div class="foot"><span>図鑑のカードを押すと詳細が見られます</span><span class="btns"><button class="reset" id="credits" type="button">クレジット</button><button class="reset" id="reset" type="button">データをリセット</button></span></div>
-<dialog id="dlg"><div id="dlgBody"></div><button class="reset" id="dlgClose" type="button">とじる</button></dialog>
+<p class="note">入手したカードを押すと詳細が見られます</p>
+</section>
+
+<section class="view" id="v-menu" aria-label="メニュー" hidden>
+<h2>あそびかた</h2>
+<ul class="rules">
+<li>タップでポイントが貯まり、貯まるとカプセルが自動で出ます</li>
+<li>出現率：N（ドット絵）70% ／ R（イラスト）25% ／ SR（写真）5%</li>
+<li>倍率：N 1種ごと+1、R 1種ごと+0.25、SR 1種ごと+2 の掛け算</li>
+<li>ランクをコンプすると N ×2・R ×3・SR ×5 のボーナス</li>
+<li>20種そろうと自動クリックが解放されます</li>
+</ul>
+<p class="clear" id="clear" hidden></p>
+<h2>記録</h2>
+<dl class="info" id="record"></dl>
+<div class="menubtns">
+<button class="pill" id="credits" type="button">クレジット</button>
+<button class="pill danger" id="reset" type="button">データをリセット</button>
+</div>
+</section>
 </main>
+
+<nav class="tabbar" aria-label="画面切り替え">
+<button type="button" data-v="gacha" aria-current="page"><span class="ic">●</span>ガチャ</button>
+<button type="button" data-v="zukan"><span class="ic">▦</span>図鑑<i class="dot" id="newdot" hidden></i></button>
+<button type="button" data-v="menu"><span class="ic">≡</span>メニュー</button>
+</nav>
+</div>
+<dialog id="dlg"><div id="dlgBody"></div><button class="pill" id="dlgClose" type="button">とじる</button></dialog>
 <script src="config.js"></script>
 <script src="items.js"></script>
 <script src="game.js"></script>

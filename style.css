@@ -1,68 +1,113 @@
 /* VOICE: 明るく遊べる、駄菓子屋のガチャ機
-   IDEA: カプセルトイの筐体。押すほどカプセルが貯まり、10回で1個出る
-   PICTURE: 大きな丸ボタン＋出てきたカード。図鑑は枠色でランクが分かる
-   COLOUR/TYPE: ガチャ赤 #e8433a、黄 #ffcf3a、墨。M PLUS Rounded 1c
-   LAYOUT: 上に筐体とカード、下に図鑑。スマホは縦積み */
-:root{color-scheme:light dark;--bg:light-dark(#ffcf3a,#1d1a2e);--ink:light-dark(#2a1a12,#f6efe4);--panel:light-dark(#fff8e6,#2a2640);--red:#e8433a;--line:light-dark(#2a1a12,#0d0b16)}
+   LAYOUT: スマホ縦画面ファースト。上にステータス、中央に出てきたカード、
+   親指の届く下部に大きなタップボタン、最下部にタブバー（ガチャ／図鑑／メニュー）。
+   PCでは中央にスマホ幅のカラムとして表示 */
+:root{color-scheme:light dark;--bg:light-dark(#ffcf3a,#1d1a2e);--ink:light-dark(#2a1a12,#f6efe4);--panel:light-dark(#fff8e6,#2a2640);--red:#e8433a;--line:light-dark(#2a1a12,#0d0b16);
+  --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "M PLUS Rounded 1c",system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
-.band{padding:clamp(20px,4vw,48px) max(5vw,16px);max-width:1100px;margin:0 auto}
-h1{font-size:clamp(28px,6vw,44px);line-height:1.05;margin:0 0 4px;font-weight:800}
-.sub{margin:0 0 20px;font-size:14px;opacity:.8}
-.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:stretch}
-@media(max-width:700px){.top{grid-template-columns:minmax(0,1fr)}}
-.machine{background:var(--red);border:4px solid var(--line);border-radius:28px;padding:22px;color:#fff;display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 8px 0 var(--line)}
-.stats{display:flex;gap:10px;width:100%;flex-wrap:wrap}
-.stat{flex:1;background:rgba(0,0,0,.18);border-radius:14px;padding:8px 12px}
-.stat b{display:block;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
-.stat span{font-size:13px}
-#btn{width:min(220px,60vw);aspect-ratio:1;border-radius:50%;border:5px solid var(--line);background:radial-gradient(circle at 35% 30%,#fff7c9,#ffcf3a 45%,#e9a400);font:800 24px "M PLUS Rounded 1c",sans-serif;color:#2a1a12;cursor:pointer;box-shadow:0 10px 0 var(--line);transition:transform .06s,box-shadow .06s;touch-action:manipulation}
-#btn:active{transform:translateY(8px);box-shadow:0 2px 0 var(--line)}
-#btn:focus-visible{outline:4px solid #fff;outline-offset:4px}
-.meter{width:100%;height:18px;background:rgba(0,0,0,.25);border-radius:9px;overflow:hidden;border:3px solid var(--line)}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "M PLUS Rounded 1c",system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button{font:inherit;color:inherit}
+
+.app{height:100vh;height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);position:relative}
+@media(min-width:560px){.app{border-left:4px solid var(--line);border-right:4px solid var(--line)}body{background:light-dark(#f3b92a,#141222)}}
+
+/* HUD */
+.hud{display:flex;gap:6px;padding:calc(8px + var(--sat)) 10px 8px;background:var(--red);color:#fff;border-bottom:4px solid var(--line);flex:none}
+.stat{flex:1;background:rgba(0,0,0,.2);border-radius:12px;padding:4px 8px;text-align:center}
+.stat b{display:block;font-size:clamp(15px,4.6vw,20px);line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat span{font-size:11px;opacity:.9}
+
+/* 画面 */
+.views{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.view[hidden]{display:none!important}
+#v-gacha{display:flex;flex-direction:column;overflow:hidden}
+#v-zukan,#v-menu{padding:12px 12px 24px}
+
+/* ガチャ画面 */
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;text-align:center}
+.stage .card{width:min(46vw,26dvh,190px)}
+.machine{flex:none;background:var(--red);color:#fff;border-top:4px solid var(--line);border-radius:26px 26px 0 0;padding:12px 16px 14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.chip{margin:0;font-size:12px;font-weight:800;background:rgba(0,0,0,.22);padding:3px 12px;border-radius:12px}
+.chip.on{background:#fff;color:#2a1a12}
+.meter{width:100%;height:14px;background:rgba(0,0,0,.25);border-radius:8px;overflow:hidden;border:3px solid var(--line)}
 .meter i{display:block;height:100%;background:#fff;width:0;transition:width .1s}
-.hint{font-size:14px;margin:0}
-.stage{background:var(--panel);border:4px solid var(--line);border-radius:28px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:340px;box-shadow:0 8px 0 var(--line)}
-.card{width:190px;border-radius:18px;padding:10px;border:4px solid var(--line);background:#fff;color:#2a1a12;text-align:center;position:relative}
-.card .art{aspect-ratio:1;border-radius:10px;background:#f3efe6;display:grid;place-items:center;overflow:hidden}
-.card .art svg{width:100%;height:100%}
-.card .nm{font-weight:800;margin-top:6px}
+.hint{font-size:12px;margin:0;font-variant-numeric:tabular-nums}
+.btnwrap{position:relative;display:grid;place-items:center;padding:4px 0 8px}
+#btn{width:min(52vw,24dvh,200px);aspect-ratio:1;border-radius:50%;border:5px solid var(--line);background:radial-gradient(circle at 35% 30%,#fff7c9,#ffcf3a 45%,#e9a400);font:800 clamp(18px,5.5vw,24px) "M PLUS Rounded 1c",sans-serif;color:#2a1a12;cursor:pointer;box-shadow:0 9px 0 var(--line);transition:transform .05s,box-shadow .05s;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#btn.press,#btn:active{transform:translateY(7px);box-shadow:0 2px 0 var(--line)}
+#btn:focus-visible{outline:4px solid #fff;outline-offset:4px}
+#fx{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.plus{position:absolute;font-weight:800;font-size:18px;color:#fff;text-shadow:0 2px 0 var(--line),0 0 4px var(--line);animation:up .7s ease-out forwards;white-space:nowrap}
+@keyframes up{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-60px)}}
+
+/* カード */
+.card{border-radius:16px;padding:8px;border:4px solid var(--line);background:#fff;color:#2a1a12;text-align:center;position:relative;display:block}
+.card .art{aspect-ratio:1;border-radius:9px;background:#f3efe6;display:grid;place-items:center;overflow:hidden}
+.card .art svg,.card .art img{width:100%;height:100%;display:block}
+.card .nm{font-weight:800;margin-top:4px;line-height:1.3}
 .N{background:linear-gradient(135deg,#e0a77a,#b5703f)}
 .R{background:linear-gradient(135deg,#f4f6fa,#a9b3c4)}
 .SR{background:linear-gradient(135deg,#fff1a8,#e0aa1c 60%,#fff1a8)}
-.rk{position:absolute;top:-12px;left:-12px;background:var(--line);color:#fff;font-weight:800;font-size:14px;padding:2px 10px;border-radius:10px}
-.new{position:absolute;top:-12px;right:-12px;background:var(--red);color:#fff;font-weight:800;font-size:13px;padding:2px 8px;border-radius:10px}
+.rk{position:absolute;top:-10px;left:-10px;background:var(--line);color:#fff;font-weight:800;font-size:12px;padding:1px 8px;border-radius:9px}
+.new{position:absolute;top:-10px;right:-10px;background:var(--red);color:#fff;font-weight:800;font-size:12px;padding:1px 7px;border-radius:9px}
 .pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
 @keyframes pop{from{transform:scale(.3) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
-@media(prefers-reduced-motion:reduce){.pop{animation:none}}
-.empty{opacity:.7;text-align:center}
-h2{font-size:24px;margin:28px 0 10px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-.tabs button,.reset{min-height:44px;padding:0 16px;border-radius:22px;border:3px solid var(--line);background:var(--panel);color:var(--ink);font:800 15px "M PLUS Rounded 1c",sans-serif;cursor:pointer}
+.empty{margin:0;opacity:.75;font-size:14px}
+.comp{margin:0;font-weight:800;background:var(--red);color:#fff;padding:3px 12px;border-radius:12px;font-size:14px}
+.comp.all{background:var(--line);font-size:16px}
+
+/* 図鑑 */
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:0 -12px 12px;padding:2px 12px 4px;scrollbar-width:none;position:sticky;top:-12px;background:var(--bg);z-index:1;padding-top:12px;margin-top:-12px}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button,.pill{flex:none;min-height:40px;padding:0 14px;border-radius:20px;border:3px solid var(--line);background:var(--panel);color:var(--ink);font-weight:800;font-size:14px;cursor:pointer;white-space:nowrap}
 .tabs button[aria-pressed=true]{background:var(--line);color:#fff}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
-.grid .card{width:auto;padding:7px;border-width:3px}
-.grid .card .nm{font-size:14px}
-.cnt{font-size:13px;opacity:.75}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px 10px;padding-top:6px}
+.grid .card{padding:5px;border-width:3px;border-radius:13px;width:100%;cursor:pointer}
+.grid .card .nm{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grid .rk{font-size:11px;top:-8px;left:-8px}
+.cnt{font-size:11px;opacity:.75}
 .locked .art{filter:brightness(0) opacity(.18)}
-.rates{font-size:14px;margin:14px 0 0}
-.foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:24px;font-size:13px;opacity:.85}
-.stat b{font-size:clamp(18px,4vw,26px);overflow-wrap:anywhere}
-.auto{margin:0;font-size:14px;font-weight:800;background:rgba(0,0,0,.2);padding:6px 14px;border-radius:14px}
-.auto.on{background:#fff;color:#2a1a12}
-.card .art img{display:block}
-button.card{font:inherit;cursor:pointer;display:block}
 button.card:focus-visible{outline:4px solid var(--red);outline-offset:3px}
-.comp{margin:0;font-weight:800;background:var(--red);color:#fff;padding:4px 14px;border-radius:14px}
-.comp.all{background:var(--line);font-size:18px}
-.clear{margin:12px 0 0;font-weight:800;background:var(--panel);border:3px solid var(--line);border-radius:14px;padding:8px 14px}
-.btns{display:flex;gap:8px;flex-wrap:wrap}
-dialog{background:var(--panel);color:var(--ink);border:4px solid var(--line);border-radius:24px;padding:22px;width:min(420px,calc(100vw - 32px));box-shadow:0 8px 0 var(--line)}
-dialog::backdrop{background:rgba(0,0,0,.45)}
+.note{font-size:12px;opacity:.75;text-align:center;margin:16px 0 0}
+
+/* メニュー */
+#v-menu h2{font-size:18px;margin:6px 0 8px}
+.rules{margin:0 0 14px;padding-left:1.2em;font-size:14px}
+.rules li{margin-bottom:4px}
+.clear{margin:0 0 14px;font-weight:800;background:var(--panel);border:3px solid var(--line);border-radius:14px;padding:8px 12px;font-size:14px}
+.info{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 18px;width:100%}
+.info dt{font-weight:800}.info dd{margin:0;font-variant-numeric:tabular-nums}
+.menubtns{display:flex;gap:8px;flex-wrap:wrap}
+.pill.danger{border-color:var(--red);color:var(--red)}
+
+/* タブバー */
+.tabbar{flex:none;display:flex;background:var(--panel);border-top:4px solid var(--line);padding-bottom:var(--sab)}
+.tabbar button{flex:1;border:0;background:none;padding:6px 0 8px;font-weight:800;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;position:relative;opacity:.55;min-height:52px}
+.tabbar .ic{font-size:20px;line-height:1.2}
+.tabbar button[aria-current=page]{opacity:1;color:var(--red)}
+.dot{position:absolute;top:6px;left:calc(50% + 10px);width:10px;height:10px;border-radius:50%;background:var(--red);border:2px solid var(--panel)}
+
+/* ダイアログ */
+dialog{background:var(--panel);color:var(--ink);border:4px solid var(--line);border-radius:22px;padding:18px;width:min(400px,calc(100vw - 24px));max-height:calc(100dvh - 40px);overflow-y:auto;box-shadow:0 8px 0 var(--line)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
 #dlgBody{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:14px}
-#dlgBody h3{margin:0;font-size:22px}#dlgBody p{margin:0}
-.info{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;width:100%}
-.info dt{font-weight:800}.info dd{margin:0}
-.cr{margin:0;padding-left:1.2em;align-self:stretch}.small{font-size:13px;opacity:.8}
+#dlgBody .card{width:min(180px,50vw)}
+#dlgBody h3{margin:0;font-size:20px}#dlgBody p{margin:0}
+#dlgClose{display:block;margin:0 auto}
+.cr{margin:0;padding-left:1.2em;align-self:stretch}.small{font-size:12px;opacity:.8}
 #dlg a{color:inherit}
+
+/* 横向き・背の低い画面ではカードとボタンを横並び */
+@media(orientation:landscape) and (max-height:500px){
+  .app{max-width:none}
+  #v-gacha{flex-direction:row}
+  .stage .card{width:min(30dvh*1.4,160px)}
+  .machine{width:52%;border-top:0;border-left:4px solid var(--line);border-radius:26px 0 0 0;justify-content:center}
+  #btn{width:min(38dvh,160px)}
+  .hud{padding-top:6px;padding-bottom:6px}
+}
+@media(prefers-reduced-motion:reduce){.pop,.plus{animation:none}.plus{display:none}}
