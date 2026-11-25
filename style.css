@@ -21,7 +21,7 @@ button{font:inherit;color:inherit}
 /* 画面 */
 .views{flex:1;min-height:0;position:relative}
 .view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.view[hidden]{display:none!important}
+[hidden]{display:none!important}
 #v-gacha{display:flex;flex-direction:column;overflow:hidden}
 #v-zukan,#v-menu{padding:12px 12px 24px}
 
@@ -121,3 +121,68 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 #dlg a{color:inherit}
 
 @media(prefers-reduced-motion:reduce){.pop,.plus{animation:none}.plus{display:none}}
+
+/* ===== デッキ ===== */
+#v-deck,#v-battle{padding:10px 10px 24px}
+.dhead{display:flex;flex-direction:column;gap:8px}
+.dcount{display:flex;flex-wrap:wrap;gap:6px}
+.dc{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:2px 8px;font-size:12px;font-variant-numeric:tabular-nums}
+.dc.big{font-size:14px}.dc.ok{background:#3fa34d;color:#fff}.dc.over{background:var(--red);color:#fff}
+.dbtns{display:flex;gap:8px}
+.dmsg{margin:0;font-size:13px;font-weight:800;min-height:1.4em;color:var(--red)}
+.dh{font-size:16px;margin:10px 0 6px}
+.dlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:10px 6px;padding-top:6px}
+.dgrid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:12px 8px}
+#dtabs{margin:0 -10px 4px;padding:2px 10px}
+/* ミニカード */
+.mc{position:relative;border:2px solid var(--line);border-radius:9px;padding:3px;text-align:center;font:inherit;color:#2a1a12;cursor:pointer;width:100%;display:block}
+.mc .mart{aspect-ratio:1;border-radius:6px;background:#f3efe6;overflow:hidden}
+.mc .mart img,.mc .mart svg{width:100%;height:100%;display:block;object-fit:contain}
+.mc.N .mart img{image-rendering:pixelated}
+.mc.SR .mart img,.mc.SRP .mart img,.mc.UR .mart img{object-fit:cover}
+.mc .mnm{font-size:10px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.mad{display:flex;gap:2px;justify-content:center;font-size:10px;font-weight:800;font-variant-numeric:tabular-nums}
+.mad span,.fs span{padding:0 3px;border-radius:4px;color:#fff}
+.mad .atk,.fs .atk{background:#c8372f}.mad .def,.fs .def{background:#2f6fb5}
+.mrk{position:absolute;top:-7px;left:-7px;background:var(--line);color:#fff;font-size:9px;font-weight:800;padding:0 4px;border-radius:6px;z-index:1}
+.mb{position:absolute;top:-7px;right:-7px;background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:0 5px;border-radius:6px;z-index:1}
+.mc:disabled{opacity:.4;cursor:default}
+.mc.big{width:min(150px,45vw);pointer-events:none}
+.mc.big .mnm{font-size:14px}.mc.big .mad{font-size:14px}
+.glist{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-self:stretch}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-self:stretch}
+.opts .pill{padding:0 6px;font-size:13px}
+.err{color:var(--red);font-weight:800;font-size:13px}
+/* ===== 対戦 ===== */
+.bstart{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.bstart h2{margin:0;font-size:18px}
+.brules summary{font-weight:800;cursor:pointer}
+.board{display:flex;flex-direction:column;gap:6px}
+.pbar{display:flex;align-items:center;gap:8px;font-size:12px;flex-wrap:wrap}
+.pbar b{font-size:14px}.pbar .life{font-weight:800;font-size:18px;color:var(--red);font-variant-numeric:tabular-nums}
+.field{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px;border-radius:14px;background:rgba(0,0,0,.1)}
+#cField{background:rgba(47,111,181,.15)}#pField{background:rgba(200,55,47,.12)}
+.slot{aspect-ratio:1;border:2px dashed rgba(0,0,0,.25);border-radius:10px;display:grid;place-items:center;position:relative;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;min-width:0}
+.slot:disabled{cursor:default}
+.slot.tg{border:3px solid var(--red);animation:tg .8s ease-in-out infinite alternate}
+@keyframes tg{to{background:rgba(232,67,58,.25)}}
+.slot.pk{border:3px solid #2f6fb5;background:rgba(47,111,181,.25)}
+.slot.at{border:3px solid var(--red)}
+.fc{width:74%;aspect-ratio:3/4;border-radius:8px;border:2px solid var(--line);background:#fff;position:relative;overflow:hidden;display:flex;flex-direction:column;padding:2px;transition:transform .25s}
+.fc.h{transform:rotate(90deg)}
+.fc .fa{flex:1;min-height:0;background:#f3efe6;border-radius:4px;overflow:hidden}
+.fc .fa img,.fc .fa svg{width:100%;height:100%;display:block;object-fit:cover}
+.fc.N .fa img{image-rendering:pixelated;object-fit:contain}.fc.R .fa img{object-fit:contain}
+.fs{display:flex;justify-content:center;gap:2px;font-size:10px;font-weight:800;line-height:1.4;margin-top:1px;font-variant-numeric:tabular-nums}
+.fc.back{background:repeating-linear-gradient(45deg,#c8372f 0 6px,#a82b24 6px 12px);display:grid;place-items:center;color:#fff;font-weight:800;font-size:20px}
+.fc.down{opacity:.7}
+.dn{position:absolute;top:2px;right:2px;background:var(--line);color:#fff;font-style:normal;font-size:9px;padding:0 3px;border-radius:4px}
+.sd{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);background:var(--line);color:#fff;font-style:normal;font-size:9px;padding:0 4px;border-radius:4px;white-space:nowrap}
+.blog{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:4px 8px;font-size:11px;min-height:64px;line-height:1.45}
+.blog p{margin:0}.blog p:last-child{font-weight:800}
+.hand{display:flex;gap:8px;overflow-x:auto;padding:8px 2px 4px;scrollbar-width:none}
+.hand .mc{flex:none;width:66px}
+.bact{display:flex;align-items:center;gap:6px}
+.bact span{flex:1;font-size:12px;font-weight:800;line-height:1.3}
+.bact .pill{min-height:40px;padding:0 10px;font-size:13px}
+.tabbar button{font-size:11px}

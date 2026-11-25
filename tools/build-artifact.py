@@ -19,7 +19,7 @@ def inline_photo(m):  # 写真もページに埋め込む（別ファイルが�
     return '"img":"data:image/jpeg;base64,%s"'%base64.b64encode(b.getvalue()).decode()
 items=re.sub(r'"img":"(images/(?:n|r)/[^"]+)"',inline_img,r('items.js'))
 items=re.sub(r'"img":"(images/sr/[^"]+)"',inline_photo,items)
-js='\n'.join([r('config.js'),items,r('game.js')]).replace('</script','<\\/script')
+js='\n'.join([r('config.js'),items,r('game.js'),r('battle.js')]).replace('</script','<\\/script')
 page=f'''<title>素材ガチャクリッカー</title>
 <meta name="theme-color" content="#e8433a">
 <link rel="preconnect" href="https://fonts.googleapis.com">

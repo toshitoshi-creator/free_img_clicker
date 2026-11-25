@@ -24,5 +24,10 @@ const CONFIG = {
   AUTO_SHRINK: 0.9,       // 1種類増えるごとに間隔 ×0.9
   AUTO_MIN_MS: 50,        // 最短間隔
 
+  // デッキと対戦
+  DECK: { SIZE: 30, UR: 2, SR: 5, R: 10, COPY: 3 }, // 30枚。UR 2枚まで、SR と SR+ は合わせて5枚まで、R 10枚まで、同じカードは3枚まで
+  TRIBUTE: { N: 0, R: 1, SR: 2, 'SR+': 2, UR: 3 },  // 出すときに使用不可にする場のカードの枚数
+  BATTLE_LIFE: 50,
+
   SAVE_KEY: 'sozai-gacha-v3', // 素材を実在のフリー素材に入れ替えたので v3 から新規
 };

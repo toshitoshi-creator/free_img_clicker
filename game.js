@@ -131,7 +131,7 @@ function render() {
   $('bonus').textContent = cb > 1 ? `ボーナス ×${+cb.toFixed(2)}` : '';
   $('bonus').hidden = cb === 1;
   $('clear').hidden = !st.clearedAt;
-  $('record').innerHTML = `<dt>合計ポイント</dt><dd>${fmt(st.earned)} pt</dd><dt>　うちタップ</dt><dd>${fmt(st.earned - st.earnedAuto)} pt</dd><dt>　うち自動</dt><dd>${fmt(st.earnedAuto)} pt</dd><dt>タップ数</dt><dd>${fmt(st.taps)}</dd><dt>ガチャ回数</dt><dd>${fmt(st.draws)}</dd><dt>次の1個</dt><dd>${fmt(c)} pt</dd><dt>プレイ開始</dt><dd>${st.start ? new Date(st.start).toLocaleString('ja-JP') : '—'}</dd>`;
+  $('record').innerHTML = (st.bstats ? `<dt>対戦成績</dt><dd>${st.bstats.win}勝 ${st.bstats.lose}敗</dd>` : '') + `<dt>合計ポイント</dt><dd>${fmt(st.earned)} pt</dd><dt>　うちタップ</dt><dd>${fmt(st.earned - st.earnedAuto)} pt</dd><dt>　うち自動</dt><dd>${fmt(st.earnedAuto)} pt</dd><dt>タップ数</dt><dd>${fmt(st.taps)}</dd><dt>ガチャ回数</dt><dd>${fmt(st.draws)}</dd><dt>次の1個</dt><dd>${fmt(c)} pt</dd><dt>プレイ開始</dt><dd>${st.start ? new Date(st.start).toLocaleString('ja-JP') : '—'}</dd>`;
   if (st.clearedAt) $('clear').textContent = `🎉 全種コンプ記録：${dur(st.clearedAt - st.start)}（${fmt(st.taps)}タップ・${fmt(st.draws)}回）`;
   $('earned').textContent = short(st.earned);
   if (view === 'zukan' && zukanDirty) renderZukan();
@@ -180,6 +180,7 @@ document.querySelector('.tabbar').addEventListener('click', e => {
   document.querySelectorAll('.tabbar button').forEach(x => x === b ? x.setAttribute('aria-current', 'page') : x.removeAttribute('aria-current'));
   document.querySelectorAll('.view').forEach(v => { const on = v.id === 'v-' + view; v.hidden = !on; v.classList.toggle('active', on); });
   if (view === 'zukan') { $('newdot').hidden = true; if (zukanDirty) renderZukan(); }
+  document.dispatchEvent(new CustomEvent('sg:view', { detail: view })); // デッキ・対戦画面に通知
 });
 $('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { filter = b.dataset.k; renderZukan(); $('v-zukan').scrollTop = 0; } });
 $('genres').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { gfilter = b.dataset.g; renderZukan(); $('v-zukan').scrollTop = 0; } });
@@ -222,4 +223,6 @@ $('reset').addEventListener('click', () => {
   render();
 });
 ensureAuto(); render();
+// デッキ・対戦（battle.js）から使うもの
+window.SG = { get st() { return st; }, save, esc, fmt, artOf, openDlg, closeDlg: () => dlg.close(), RANKS, RLBL, rcls, dur };
 }

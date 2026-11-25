@@ -43,6 +43,51 @@
 </section>
 
 
+<section class="view" id="v-deck" aria-label="デッキ" hidden>
+<div class="dhead">
+<div class="dcount" id="dcount"></div>
+<div class="dbtns"><button class="pill" id="dAuto" type="button">おまかせ</button><button class="pill" id="dClear" type="button">ぜんぶ外す</button></div>
+<p class="dmsg" id="dmsg" role="status"></p>
+</div>
+<h2 class="dh">デッキ <span id="dnum"></span></h2>
+<div class="dlist" id="dlist"></div>
+<h2 class="dh">持っているカード <span class="small">押すとデッキに入れる</span></h2>
+<div class="tabs" id="dtabs"></div>
+<div class="grid dgrid" id="dpool"></div>
+</section>
+
+<section class="view" id="v-battle" aria-label="対戦" hidden>
+<div id="bstart" class="bstart">
+<h2>対戦</h2>
+<p class="lead">自分のデッキ（30枚）で CPU と対戦します。ライフ50を先に0にしたほうが勝ち。</p>
+<button class="pill primary" id="bGo" type="button">対戦スタート</button>
+<p class="dmsg" id="bmsg"></p>
+<details class="brules"><summary>ルール</summary>
+<ul class="rules">
+<li>はじめに5枚引き、先攻・後攻をコインで決めます</li>
+<li>自分のターンのはじめに1枚引きます。山札が引けなくなったら負け</li>
+<li>カードを場に出せるのは1ターンに1枚。場は4枚まで</li>
+<li>出すときに表/裏、縦（攻撃）/横（守備）を選べます。裏のカードは相手から見えません</li>
+<li>R は場のカード1枚、SR・SR+ は2枚、UR は3枚を使用不可にしないと出せません</li>
+<li>先攻の1ターン目は出すだけで攻撃できません</li>
+<li>縦のカードで攻撃。縦の相手には攻撃同士、横の相手には攻撃対守備で比べ、低いほうが使用不可へ</li>
+<li>縦の相手に勝つと差分だけ相手ライフが減り、負けると差分だけ自分のライフが減ります。横の相手ではライフは減りません</li>
+<li>同じ数字なら縦同士は両方使用不可、横の相手ならどちらも残ります</li>
+<li>相手の場が空なら攻撃ポイントがそのままダメージ</li>
+<li>置いたターンと攻撃したあと以外なら、1ターン1回だけ縦横を切り替えられます（裏なら表になります）</li>
+</ul></details>
+</div>
+<div id="board" class="board" hidden>
+<div class="pbar cpu"><b>CPU</b><span class="life" id="cLife"></span><span id="cInfo"></span></div>
+<div class="field" id="cField"></div>
+<div class="blog" id="blog" aria-live="polite"></div>
+<div class="field" id="pField"></div>
+<div class="pbar you"><b>あなた</b><span class="life" id="pLife"></span><span id="pInfo"></span></div>
+<div class="hand" id="pHand"></div>
+<div class="bact"><span id="bphase"></span><button class="pill" id="bGrave" type="button">使用不可</button><button class="pill primary" id="bEnd" type="button">ターン終了</button></div>
+</div>
+</section>
+
 <section class="view" id="v-menu" aria-label="メニュー" hidden>
 <h2>あそびかた</h2>
 <ul class="rules">
@@ -69,6 +114,8 @@
 <nav class="tabbar" aria-label="画面切り替え">
 <button type="button" data-v="gacha" aria-current="page"><span class="ic">●</span>ガチャ</button>
 <button type="button" data-v="zukan"><span class="ic">▦</span>図鑑<i class="dot" id="newdot" hidden></i></button>
+<button type="button" data-v="deck"><span class="ic">▤</span>デッキ</button>
+<button type="button" data-v="battle"><span class="ic">⚔</span>対戦</button>
 <button type="button" data-v="menu"><span class="ic">≡</span>メニュー</button>
 </nav>
 </div>
@@ -76,5 +123,6 @@
 <script src="config.js"></script>
 <script src="items.js"></script>
 <script src="game.js"></script>
+<script src="battle.js"></script>
 </body>
 </html>
