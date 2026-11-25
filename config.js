@@ -18,15 +18,11 @@ const CONFIG = {
   // ジャンル別コンプボーナス：「ランク×ジャンル」（例：N・動物）を全種そろえるごとに倍率に掛け算
   GENRE_BONUS: 1.2,
 
-  // 追加素材の画像サイズ（長辺px）。ドット絵は小さく保存して拡大表示
-  CUSTOM_SIZE: { N: 48, R: 256, SR: 320 },
-  CUSTOM_KEY: 'sozai-gacha-custom-v1',
-
   // 自動クリック
   AUTO_UNLOCK: 20,        // 新規カード（種類数）がこの数に達したら解放
   AUTO_BASE_MS: 1000,     // 解放時の間隔
   AUTO_SHRINK: 0.9,       // 1種類増えるごとに間隔 ×0.9
   AUTO_MIN_MS: 50,        // 最短間隔
 
-  SAVE_KEY: 'sozai-gacha-v2',
+  SAVE_KEY: 'sozai-gacha-v3', // 素材を実在のフリー素材に入れ替えたので v3 から新規
 };
