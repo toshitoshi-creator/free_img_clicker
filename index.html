@@ -25,6 +25,7 @@
 <p class="empty">タップでポイントを貯めると<br>カプセルが出てくるよ</p>
 </div>
 <div class="machine">
+<p class="total">これまでの合計 <b id="earned">0</b> pt</p>
 <div class="chips"><p class="chip" id="auto"></p><p class="chip on" id="bonus" hidden></p></div>
 <div class="meter" aria-hidden="true"><i id="bar"></i></div>
 <p class="hint" id="hint"></p>
@@ -33,9 +34,40 @@
 </section>
 
 <section class="view" id="v-zukan" aria-label="図鑑" hidden>
+<div class="zhead">
 <div class="tabs" id="tabs"></div>
-<div class="grid" id="grid"></div>
+<div class="tabs genres" id="genres"></div>
+</div>
+<div id="grid"></div>
 <p class="note">入手したカードを押すと詳細が見られます</p>
+</section>
+
+<section class="view" id="v-add" aria-label="素材を追加" hidden>
+<h2>フリー素材を追加</h2>
+<p class="lead">手持ちの画像を図鑑とガチャに追加できます。配布元の利用規約を確認して、作者・ライセンス・出典を入れてください。</p>
+<form id="addForm" novalidate>
+<label class="pick" for="f-file"><span id="f-prev">＋<br>画像を選ぶ</span></label>
+<input type="file" id="f-file" accept="image/*" hidden>
+<label class="fld">名前<input id="f-name" maxlength="16" placeholder="例：トマト" autocomplete="off"></label>
+<fieldset class="fld"><legend>種類（ランク）</legend>
+<div class="seg">
+<label><input type="radio" name="f-rank" value="N" checked><span>N<small>ドット絵</small></span></label>
+<label><input type="radio" name="f-rank" value="R"><span>R<small>イラスト</small></span></label>
+<label><input type="radio" name="f-rank" value="SR"><span>SR<small>写真</small></span></label>
+</div></fieldset>
+<label class="fld">ジャンル<select id="f-cat"></select></label>
+<label class="fld" id="f-newcat-wrap" hidden>新しいジャンル名<input id="f-newcat" maxlength="8" placeholder="例：乗り物" autocomplete="off"></label>
+<label class="fld">作者・配布元<input id="f-author" maxlength="40" placeholder="例：Kenney" autocomplete="off"></label>
+<label class="fld">ライセンス<select id="f-license">
+<option>CC0</option><option>CC BY 4.0</option><option>CC BY-SA 4.0</option><option>パブリックドメイン</option><option>自作</option><option>その他（配布元の規約に従う）</option>
+</select></label>
+<label class="fld">出典URL（任意）<input id="f-url" type="url" inputmode="url" placeholder="https://" autocomplete="off"></label>
+<button type="submit" class="pill primary" id="f-submit">図鑑に追加</button>
+<p class="fmsg" id="f-msg" role="status"></p>
+</form>
+<h2>追加した素材 <span id="addCount"></span></h2>
+<div class="grid" id="addList"></div>
+<p class="note">追加した素材はこの端末に保存されます。追加するとそのランクとジャンルのコンプはいったん外れます</p>
 </section>
 
 <section class="view" id="v-menu" aria-label="メニュー" hidden>
@@ -44,8 +76,10 @@
 <li>タップでポイントが貯まり、貯まるとカプセルが自動で出ます</li>
 <li>出現率：N（ドット絵）70% ／ R（イラスト）25% ／ SR（写真）5%</li>
 <li>倍率：N 1種ごと+1、R 1種ごと+0.25、SR 1種ごと+2 の掛け算</li>
+<li>ジャンルをコンプ（例：N・動物を全部）するたびに倍率 ×1.2</li>
 <li>ランクをコンプすると N ×2・R ×3・SR ×5 のボーナス</li>
 <li>20種そろうと自動クリックが解放されます</li>
+<li>「追加」から自分で見つけたフリー素材を入れられます</li>
 </ul>
 <p class="clear" id="clear" hidden></p>
 <h2>記録</h2>
@@ -60,6 +94,7 @@
 <nav class="tabbar" aria-label="画面切り替え">
 <button type="button" data-v="gacha" aria-current="page"><span class="ic">●</span>ガチャ</button>
 <button type="button" data-v="zukan"><span class="ic">▦</span>図鑑<i class="dot" id="newdot" hidden></i></button>
+<button type="button" data-v="add"><span class="ic">＋</span>追加</button>
 <button type="button" data-v="menu"><span class="ic">≡</span>メニュー</button>
 </nav>
 </div>
