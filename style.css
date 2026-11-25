@@ -77,6 +77,10 @@ button{font:inherit;color:inherit}
 .grid .card .nm{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .grid .rk{font-size:11px;top:-8px;left:-8px}
 .cnt{font-size:11px;opacity:.75}
+.ad{display:flex;justify-content:center;gap:4px;margin-top:2px;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.4}
+.ad span{padding:0 5px;border-radius:6px;color:#fff}
+.ad .atk{background:#c8372f}.ad .def{background:#2f6fb5}
+.stage .ad{font-size:13px}
 .locked .art{filter:brightness(0) opacity(.18)}
 .note{font-size:12px;opacity:.75;text-align:center;margin:16px 0 0}
 

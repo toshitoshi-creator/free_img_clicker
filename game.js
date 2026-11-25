@@ -102,7 +102,7 @@ let filter = 'ALL';
 function card(it, o = {}) {
   const n = st.own[it.id] || 0, lock = o.grid && !n && !o.mine;
   const tag = o.grid && !lock ? `button type="button" data-id="${it.id}" aria-label="${esc(it.name)}の詳細"` : 'div';
-  return `<${tag} class="card ${it.rank}${lock ? ' locked' : ''}${o.pop ? ' pop' : ''}"><span class="rk">${it.rank}</span>${o.isNew ? '<span class="new">NEW</span>' : ''}<div class="art">${artOf(it)}</div><div class="nm">${lock ? '？？？' : esc(it.name)}</div><div class="cnt">${o.grid && n ? '×' + n : esc(it.cat)}</div></${tag.split(' ')[0]}>`;
+  return `<${tag} class="card ${it.rank}${lock ? ' locked' : ''}${o.pop ? ' pop' : ''}"><span class="rk">${it.rank}</span>${o.isNew ? '<span class="new">NEW</span>' : ''}<div class="art">${artOf(it)}</div><div class="nm">${lock ? '？？？' : esc(it.name)}</div><div class="ad"><span class="atk">攻${lock ? '?' : it.atk}</span><span class="def">防${lock ? '?' : it.def}</span></div><div class="cnt">${o.grid && n ? '×' + n : esc(it.cat)}</div></${tag.split(' ')[0]}>`;
 }
 const dur = ms => { const t = Math.round(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60; return (h ? h + '時間' : '') + (h || m ? m + '分' : '') + sec + '秒'; };
 const RLBL = { N: 'N ドット', R: 'R イラスト', SR: 'SR 写真' };
@@ -185,16 +185,20 @@ const dlg = $('dlg');
 function openDlg(html) { $('dlgBody').innerHTML = html; dlg.showModal(); }
 function openDetail(id) {
   const it = ITEMS.find(i => i.id === id); if (!it) return;
-  openDlg(card(it) + `<dl class="info"><dt>ランク</dt><dd>${RLBL[it.rank]}</dd><dt>ジャンル</dt><dd>${esc(it.cat)}</dd><dt>所持数</dt><dd>${fmt(st.own[it.id] || 0)}</dd><dt>素材</dt><dd>${credit(it)}</dd></dl>`
+  openDlg(card(it) + `<dl class="info"><dt>ランク</dt><dd>${RLBL[it.rank]}</dd><dt>ジャンル</dt><dd>${esc(it.cat)}</dd><dt>攻撃</dt><dd>${it.atk}</dd><dt>防御</dt><dd>${it.def}（合計 ${it.atk + it.def}）</dd><dt>所持数</dt><dd>${fmt(st.own[it.id] || 0)}</dd><dt>素材</dt><dd>${credit(it)}</dd></dl>`
     );
 }
 $('grid').addEventListener('click', e => { const b = e.target.closest('button[data-id]'); if (b) openDetail(b.dataset.id); });
 $('credits').addEventListener('click', () => {
   // 配布元（URL＋ライセンス）ごとにまとめる。スミソニアンは撮影者・所蔵館が複数
   const src = {};
-  const isSI = c => /si\.edu|cooperhewitt/.test(c.url);
-  ITEMS.forEach(i => { const c = i.credit, k = isSI(c) ? 'si' : c.url + c.license; (src[k] = src[k] || { c: isSI(c) ? { author: 'Smithsonian Open Access', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に加工・縮小' } : c, list: [], authors: new Set() }).list.push(i.name); src[k].authors.add(c.author.replace('（Smithsonian Open Access）', '')); });
-  openDlg(`<h3>クレジット</h3><p class="small">このゲームの${ITEMS.length}種の絵と写真は、すべて実在のフリー素材です。</p><ul class="cr">${Object.values(src).map(g => `<li><b>${esc(g.c.author)}</b><br>${esc(g.c.license)}${g.c.note ? '・' + esc(g.c.note) : ''}・<a href="${esc(g.c.url)}" target="_blank" rel="noopener">配布元</a>${g.authors.size > 1 ? `<details><summary class="small">撮影・所蔵（${g.authors.size}件）</summary><span class="small">${[...g.authors].map(esc).join('<br>')}</span></details>` : ''}<details><summary class="small">使っている素材（${g.list.length}種）</summary><span class="small">${g.list.map(esc).join('、')}</span></details></li>`).join('')}</ul>`
+  const isSI = c => /si\.edu|cooperhewitt/.test(c.url), isOI = c => c.license === 'CC BY 2.0';
+  ITEMS.forEach(i => { const c = i.credit;
+    if (isOI(c)) { // Open Images は写真ごとに撮影者と元ページを表示（CC BY 2.0 の表記）
+      (src.oi = src.oi || { c: { author: 'Open Images Dataset（Flickr の各撮影者）', license: 'CC BY 2.0', url: 'https://creativecommons.org/licenses/by/2.0/', note: '正方形に切り抜き・縮小' }, list: [], authors: new Set(), each: [] }).list.push(i.name);
+      src.oi.each.push(`${esc(i.name)}：<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.author.replace('（Flickr）', ''))}</a>`); return; }
+    const k = isSI(c) ? 'si' : c.url + c.license; (src[k] = src[k] || { c: isSI(c) ? { author: 'Smithsonian Open Access', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に加工・縮小' } : c, list: [], authors: new Set() }).list.push(i.name); src[k].authors.add(c.author.replace('（Smithsonian Open Access）', '')); });
+  openDlg(`<h3>クレジット</h3><p class="small">このゲームの${ITEMS.length}種の絵と写真は、すべて実在のフリー素材です。</p><ul class="cr">${Object.values(src).map(g => `<li><b>${esc(g.c.author)}</b><br>${esc(g.c.license)}${g.c.note ? '・' + esc(g.c.note) : ''}・<a href="${esc(g.c.url)}" target="_blank" rel="noopener">配布元</a>${g.each ? `<details><summary class="small">写真ごとの撮影者（${g.each.length}件）</summary><span class="small">${g.each.join('<br>')}</span></details>` : g.authors.size > 1 ? `<details><summary class="small">撮影・所蔵（${g.authors.size}件）</summary><span class="small">${[...g.authors].map(esc).join('<br>')}</span></details>` : ''}<details><summary class="small">使っている素材（${g.list.length}種）</summary><span class="small">${g.list.map(esc).join('、')}</span></details></li>`).join('')}</ul>`
     + `<p class="small">MIT ライセンスの素材の著作権表示と許諾文は LICENSES.md に収録しています。フォント：M PLUS Rounded 1c（SIL Open Font License）</p>`);
 });
 
