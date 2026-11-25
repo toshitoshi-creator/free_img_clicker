@@ -1,17 +1,16 @@
 /* VOICE: 明るく遊べる、駄菓子屋のガチャ機
-   LAYOUT: スマホ縦画面ファースト。上にステータス、中央に出てきたカード、
-   親指の届く下部に大きなタップボタン、最下部にタブバー（ガチャ／図鑑／メニュー）。
-   PCでは中央にスマホ幅のカラムとして表示 */
-:root{color-scheme:light dark;--bg:light-dark(#ffcf3a,#1d1a2e);--ink:light-dark(#2a1a12,#f6efe4);--panel:light-dark(#fff8e6,#2a2640);--red:#e8433a;--line:light-dark(#2a1a12,#0d0b16);
+   LAYOUT: スマホアプリ専用（縦画面固定）。上にステータス、中央に出てきたカード、
+   親指の届く下部に大きなタップボタン、最下部にタブバー（ガチャ／図鑑／メニュー） */
+:root{--bg:#ffcf3a;--ink:#2a1a12;--panel:#fff8e6;--red:#e8433a;--line:#2a1a12;
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
-:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#1d1a2e;--ink:#f6efe4;--panel:#2a2640;--line:#0d0b16;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#1d1a2e;--ink:#f6efe4;--panel:#2a2640;--line:#0d0b16;color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "M PLUS Rounded 1c",system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 button{font:inherit;color:inherit}
 
-.app{height:100vh;height:100dvh;max-width:480px;margin:0 auto;display:flex;flex-direction:column;background:var(--bg);position:relative}
-@media(min-width:560px){.app{border-left:4px solid var(--line);border-right:4px solid var(--line)}body{background:light-dark(#f3b92a,#141222)}}
+.app{height:100%;display:flex;flex-direction:column;background:var(--bg);position:relative}
 
 /* HUD */
 .hud{display:flex;gap:6px;padding:calc(8px + var(--sat)) 10px 8px;background:var(--red);color:#fff;border-bottom:4px solid var(--line);flex:none}
@@ -39,7 +38,6 @@ button{font:inherit;color:inherit}
 .btnwrap{position:relative;display:grid;place-items:center;padding:4px 0 8px}
 #btn{width:min(52vw,24dvh,200px);aspect-ratio:1;border-radius:50%;border:5px solid var(--line);background:radial-gradient(circle at 35% 30%,#fff7c9,#ffcf3a 45%,#e9a400);font:800 clamp(18px,5.5vw,24px) "M PLUS Rounded 1c",sans-serif;color:#2a1a12;cursor:pointer;box-shadow:0 9px 0 var(--line);transition:transform .05s,box-shadow .05s;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 #btn.press,#btn:active{transform:translateY(7px);box-shadow:0 2px 0 var(--line)}
-#btn:focus-visible{outline:4px solid #fff;outline-offset:4px}
 #fx{position:absolute;inset:0;pointer-events:none;overflow:visible}
 .plus{position:absolute;font-weight:800;font-size:18px;color:#fff;text-shadow:0 2px 0 var(--line),0 0 4px var(--line);animation:up .7s ease-out forwards;white-space:nowrap}
 @keyframes up{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-60px)}}
@@ -71,7 +69,6 @@ button{font:inherit;color:inherit}
 .grid .rk{font-size:11px;top:-8px;left:-8px}
 .cnt{font-size:11px;opacity:.75}
 .locked .art{filter:brightness(0) opacity(.18)}
-button.card:focus-visible{outline:4px solid var(--red);outline-offset:3px}
 .note{font-size:12px;opacity:.75;text-align:center;margin:16px 0 0}
 
 /* メニュー */
@@ -101,13 +98,4 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .cr{margin:0;padding-left:1.2em;align-self:stretch}.small{font-size:12px;opacity:.8}
 #dlg a{color:inherit}
 
-/* 横向き・背の低い画面ではカードとボタンを横並び */
-@media(orientation:landscape) and (max-height:500px){
-  .app{max-width:none}
-  #v-gacha{flex-direction:row}
-  .stage .card{width:min(30dvh*1.4,160px)}
-  .machine{width:52%;border-top:0;border-left:4px solid var(--line);border-radius:26px 0 0 0;justify-content:center}
-  #btn{width:min(38dvh,160px)}
-  .hud{padding-top:6px;padding-bottom:6px}
-}
 @media(prefers-reduced-motion:reduce){.pop,.plus{animation:none}.plus{display:none}}

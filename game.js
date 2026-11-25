@@ -118,7 +118,7 @@ function render() {
   $('grid').innerHTML = ITEMS.filter(i => filter === 'ALL' || i.rank === filter).map(i => card(i, { grid: true })).join('');
 }
 
-// ---- タップボタン：指を置いた瞬間に反応（連打・複数指OK）。キーボードは click で ----
+// ---- タップボタン：指を置いた瞬間に反応（連打・複数指OK） ----
 const btn = $('btn'), fx = $('fx');
 function floatText(x, y) {
   const el = document.createElement('span');
@@ -129,13 +129,11 @@ function floatText(x, y) {
   while (fx.childElementCount > 12) fx.firstChild.remove();
 }
 btn.addEventListener('pointerdown', e => {
-  if (e.button > 0) return;
   e.preventDefault();
   floatText(e.clientX, e.clientY); tap(false);
   btn.classList.add('press');
 });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => btn.addEventListener(t, () => btn.classList.remove('press')));
-btn.addEventListener('click', e => { if (e.detail === 0) { const r = btn.getBoundingClientRect(); floatText(r.left + r.width / 2, r.top + r.height / 2); tap(false); } });
 btn.addEventListener('contextmenu', e => e.preventDefault());
 
 // ---- 画面切り替え（下のタブバー） ----
