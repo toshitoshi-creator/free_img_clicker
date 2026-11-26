@@ -25,7 +25,7 @@ const CONFIG = {
   AUTO_MIN_MS: 50,        // 最短間隔
 
   // デッキと対戦
-  DECK: { SIZE: 30, UR: 2, SR: 5, R: 10, COPY: 3 }, // 30枚。UR 2枚まで、SR と SR+ は合わせて5枚まで、R 10枚まで、同じカードは3枚まで
+  DECK: { SIZE: 30, UR: 2, SR: 5, R: 10, COPY: 1 }, // 30枚。UR 2枚まで、SR と SR+ は合わせて5枚まで、R 10枚まで、同じカードは1枚だけ
   TRIBUTE: { N: 0, R: 1, SR: 2, 'SR+': 2, UR: 3 },  // 出すときに使用不可にする場のカードの枚数
   BATTLE_LIFE: 50,
 

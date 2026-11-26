@@ -186,3 +186,4 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .bact span{flex:1;font-size:12px;font-weight:800;line-height:1.3}
 .bact .pill{min-height:40px;padding:0 10px;font-size:13px}
 .tabbar button{font-size:11px}
+.mc.in::after{content:'デッキ';position:absolute;top:-7px;right:-7px;z-index:1;background:#3fa34d;color:#fff;font-size:9px;font-weight:800;padding:0 4px;border-radius:5px}

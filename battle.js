@@ -19,7 +19,8 @@ function mini(it, o = {}) {
 }
 
 // ================= デッキ =================
-const deck = () => (SG.st.deck = (SG.st.deck || []).filter(id => BY[id]));
+// 存在しないカードと、上限をこえる重複は取り除く（前のデッキに同じカードが複数入っていた場合など）
+const deck = () => (SG.st.deck = (SG.st.deck || []).filter((id, i, a) => BY[id] && a.slice(0, i).filter(x => x === id).length < D.COPY));
 function counts(d) { const c = { N: 0, R: 0, SR: 0, 'SR+': 0, UR: 0 }; d.forEach(id => c[BY[id].rank]++); return c; }
 const copies = (d, id) => d.filter(x => x === id).length;
 const maxCopies = id => Math.min(D.COPY, SG.st.own[id] || 0);
@@ -27,7 +28,7 @@ const maxCopies = id => Math.min(D.COPY, SG.st.own[id] || 0);
 function whyNot(d, id) {
   const it = BY[id], c = counts(d);
   if (d.length >= D.SIZE) return `デッキは${D.SIZE}枚までです`;
-  if (copies(d, id) >= maxCopies(id)) return copies(d, id) >= D.COPY ? `同じカードは${D.COPY}枚までです` : '持っている枚数までしか入れられません';
+  if (copies(d, id) >= maxCopies(id)) return copies(d, id) >= D.COPY ? (D.COPY === 1 ? '同じカードは1枚しか入れられません' : `同じカードは${D.COPY}枚までです`) : '持っている枚数までしか入れられません';
   if (it.rank === 'UR' && c.UR >= D.UR) return `UR は${D.UR}枚までです`;
   if (isSR(it.rank) && c.SR + c['SR+'] >= D.SR) return `SR と SR+ は合わせて${D.SR}枚までです`;
   if (it.rank === 'R' && c.R >= D.R) return `R は${D.R}枚までです`;
@@ -58,7 +59,7 @@ function renderDeck() {
   $('dlist').innerHTML = uniq.length ? uniq.map(id => mini(BY[id], { badge: copies(d, id) > 1 ? '×' + copies(d, id) : '', cls: ' rm' })).join('') : '<p class="note">まだ空です。下のカードを押すか「おまかせ」で作れます</p>';
   $('dtabs').innerHTML = ['ALL', ...SG.RANKS].map(k => `<button type="button" data-k="${k}" aria-pressed="${dfilter === k}">${k === 'ALL' ? 'すべて' : k}</button>`).join('');
   const pool = ITEMS.filter(i => SG.st.own[i.id] && (dfilter === 'ALL' || i.rank === dfilter)).sort((a, b) => ORDER[b.rank] - ORDER[a.rank] || sum(b) - sum(a));
-  $('dpool').innerHTML = pool.length ? pool.map(it => { const left = maxCopies(it.id) - copies(d, it.id); return mini(it, { badge: left > 0 ? '残' + left : '', disabled: !!whyNot(d, it.id) }); }).join('') : '<p class="note">カードがありません。ガチャで集めましょう</p>';
+  $('dpool').innerHTML = pool.length ? pool.map(it => { const left = maxCopies(it.id) - copies(d, it.id); return mini(it, { badge: D.COPY > 1 && left > 0 ? '残' + left : '', cls: copies(d, it.id) ? ' in' : '', disabled: !!whyNot(d, it.id) }); }).join('') : '<p class="note">カードがありません。ガチャで集めましょう</p>';
 }
 const dmsg = t => { $('dmsg').textContent = t; };
 $('dpool').addEventListener('click', e => {
