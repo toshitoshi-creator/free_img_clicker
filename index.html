@@ -17,7 +17,7 @@
 <div class="stat"><b id="pts">0</b><span>ポイント</span></div>
 <div class="stat"><b id="earned">0</b><span>クリック合計</span></div>
 <div class="stat"><b id="mult">×1</b><span>倍率</span></div>
-<div class="stat"><b id="done">0/0</b><span>図鑑</span></div>
+<div class="stat"><b id="done">0/0</b><span id="stat-done">図鑑</span></div>
 </header>
 
 <main class="views">
@@ -26,6 +26,7 @@
 <p class="empty">タップでポイントを貯めると<br>カプセルが出てくるよ</p>
 </div>
 <div class="machine">
+<button class="modebtn" id="modeBtn" type="button" hidden></button>
 <div class="chips"><p class="chip" id="auto"></p><p class="chip on" id="bonus" hidden></p></div>
 <div class="meter" aria-hidden="true"><i id="bar"></i></div>
 <p class="hint" id="hint"></p>
@@ -35,6 +36,7 @@
 
 <section class="view" id="v-zukan" aria-label="図鑑" hidden>
 <div class="zhead">
+<div class="tabs zmode" id="zmode" hidden></div>
 <div class="tabs" id="tabs"></div>
 <div class="tabs genres" id="genres"></div>
 </div>
@@ -93,18 +95,25 @@
 <ul class="rules">
 <li>タップでポイントが貯まり、貯まるとカプセルが自動で出ます</li>
 <li>出現率：N（ドット絵）57% ／ R（イラスト）27% ／ SR（写真）8% ／ SR+（人気の動物・乗り物・貴重品の写真）5% ／ UR（有名な建物・乗り物・名画）2% ／ LR（偉人）1%</li>
-<li>LR（偉人）は UR を全種そろえると出るようになります。それまでの1%は N になります</li>
-<li>倍率：N 1種ごと+0.5、R 1種ごと+0.1、SR 1種ごと+0.1、SR+ 1種ごと+0.05、UR 1種ごと+0.3 の掛け算</li>
+<li>LR（偉人）は UR を全種そろえると出るようになります。それまでの1%は N になります。同時に裏の「AIクリッカー」も解放されます</li>
+<li>倍率：N 1種ごと+0.5、R・SR・SR+ 1種ごと+0.05、UR 1種ごと+0.2、LR 1種ごと+0.3 の掛け算</li>
+<li>ダブったときは 30% の確率で、同じランクのまだ持っていないカードに変わります</li>
 <li>ジャンルをコンプ（例：N・動物を全部）するたびに倍率 ×1.03</li>
 <li>ランクをコンプすると N ×2・R ×2・SR ×2・SR+ ×3・UR ×4・LR ×5 のボーナス</li>
 <li>20種そろうと自動クリックが解放されます</li>
-<li>ジャンルは 食べ物・動物・家具・食器・植物・乗り物・建物・自然・ファッション・道具・あそび・絵画 の12</li>
+<li>ジャンルは 食べ物・動物・家具・食器・植物・乗り物・建物・自然・ファッション・道具・あそび・絵画・偉人 の13</li>
 <li>カードには攻撃・防御（1〜20）があります。合計は N 15まで・R 25まで・SR 30まで・SR+ 35まで・UR 40まで・LR 38〜40。攻撃は N 10まで・R 15まで・SR+ 18まで（今後の対戦用）</li>
 <li>絵と写真はすべて実在のフリー素材です（出典はクレジットに）</li>
 </ul>
+<div id="aiRules" hidden>
+<h2>🤖 裏：AIクリッカー</h2>
+<ul class="rules" id="aiRuleList"></ul>
+</div>
 <p class="clear" id="clear" hidden></p>
 <h2>記録</h2>
 <dl class="info" id="record"></dl>
+<h2 id="aiRecH" hidden>記録（AIクリッカー）</h2>
+<dl class="info" id="aiRec" hidden></dl>
 <div class="menubtns">
 <button class="pill" id="credits" type="button">クレジット</button>
 <button class="pill danger" id="reset" type="button">データをリセット</button>
@@ -130,7 +139,9 @@
 </div>
 <dialog id="dlg"><div id="dlgBody"></div><button class="pill" id="dlgClose" type="button">とじる</button></dialog>
 <script src="config.js"></script>
+<script src="atlas.js"></script>
 <script src="items.js"></script>
+<script src="ai-items.js"></script>
 <script src="game.js"></script>
 <script src="battle.js"></script>
 </body>

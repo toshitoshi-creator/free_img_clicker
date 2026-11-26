@@ -1,7 +1,7 @@
 # 素材クレジット・ライセンス
 
-このゲームの絵と写真（全965種）はすべて、以下の実在するフリー素材を使用しています。
-どの素材がどこから来たかは `tools/asset-list.js`・`tools/photo-list.json` と、ゲーム内の図鑑詳細・クレジット画面で確認できます。
+このゲームの絵と写真（表の素材ガチャ 全3025種＋裏のAIクリッカー 全7454種）はすべて、以下の実在するフリー素材を使用しています。
+どの素材がどこから来たかは `tools/asset-list.js`・`tools/photo-list.json`・`tools/pdq-list.json`・`tools/ai-list.json` と、ゲーム内の図鑑詳細・クレジット画面で確認できます。
 
 | ランク | 素材 | 作者 | ライセンス | 配布元 | 改変 |
 |---|---|---|---|---|---|
@@ -18,6 +18,8 @@
 | UR 絵画 | Cooper Hewitt（広重・北斎・歌麿・春信・レンブラント・ゴッホ・ミレー・ピラネージ・ゴヤ）、Smithsonian American Art Museum（モラン・ビアスタット・スチュアート・チャーチ） | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 余白を足して正方形・縮小 |
 | LR 偉人 | National Portrait Gallery（写真家・画家は items.js の credit.author、各作品ページは credit.url） | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 顔が入るよう正方形に切り抜き・縮小 |
 | LR 日本の偉人 | パブリックドメインQ（https://publicdomainq.net/ 。「利用規約なし、クレジット不要、改変・再配布も可」。各作品の元ページは items.js の credit.url。絵画は狩野元秀・歌川国芳・月岡芳年） | ― | パブリックドメイン | https://publicdomainq.net/ | 正方形に切り抜き（写真）・余白を足して正方形（絵画）・縮小 |
+| N・R・SR・SR+・UR・LR（追加分 2060種） | パブリックドメインQ（「利用規約なし、クレジット不要、改変・再配布も可」。各作品の元ページは tools/pdq-list.json と items.js の credit.url。N・R はフリーイラスト、SR・SR+ はフリー写真、UR は世界遺産の写真と名画（北斎・広重・国芳・芳年・川瀬巴水・吉田博・小原古邨・横山大観・モネ・ゴッホ・クリムトほか）、LR は歴史上の人物の写真・肖像画。実在の人物の写真は LR の偉人のみ） | ― | パブリックドメイン（CC0 の作品を含む） | https://publicdomainq.net/ | 正方形に切り抜き・縮小（N は 20マスにドット化・16色に減色）、10×10 のまとめ画像（images/atlas）に配置 |
+| 裏：AIクリッカー（全7454種） | パブリックドメインQ のフリーAI画像（AI で作られた画像。各作品の元ページは tools/ai-list.json と ai-items.js。水着・暴力などの画像は除外） | ― | CC0・パブリックドメイン | https://publicdomainq.net/ | 正方形に切り抜き・縮小、10×10 のまとめ画像に配置 |
 | UR 有名な乗り物 | National Air and Space Museum | Smithsonian Institution | CC0 | https://www.si.edu/openaccess | 余白を足して正方形・縮小 |
 | SR 写真（食べ物） | Fruits-360 | Mihai Oltean, Horea Muresan | MIT | https://github.com/Horea94/fruit-images-dataset | 拡大 |
 

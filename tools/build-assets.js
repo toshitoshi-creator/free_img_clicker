@@ -141,10 +141,18 @@ function toPixelSvg(mask, n, fill, line) {
     items.push(o);
   }
   await b.close();
+  // パブリックドメインQ の素材（tools/pdq-select.py で選び、tools/build-pdq.py でまとめ画像にしたもの）
+  const PDQ = fs.existsSync(path.join(__dirname, 'pdq-list.json')) ? JSON.parse(fs.readFileSync(path.join(__dirname, 'pdq-list.json'))) : [];
+  for (const r of PDQ) {
+    if (!r.sp) throw new Error('まとめ画像がない（先に tools/build-pdq.py）: ' + r.name);
+    const o = { id: 'q' + r.pid, name: r.name, rank: r.rank, cat: r.cat, credit: { ...CREDIT.pdq, url: r.url, src: 'pdq', note: r.rank === 'N' ? 'ドット化' : '正方形に切り抜き・縮小', ...(r.artist ? { artist: r.artist } : {}), title: r.title } };
+    [o.atk, o.def] = stats(o); o.sp = r.sp;
+    items.push(o);
+  }
   const dup = (k) => items.map(i => i[k]).filter((v, i, a) => a.indexOf(v) !== i);
   if (dup('id').length || dup('name').length) throw new Error('重複: ' + dup('id') + ' / ' + dup('name'));
   for (const i of items) { const t = i.atk + i.def, [lo, hi] = STAT_TOTAL[i.rank]; if (i.atk < 1 || i.def < 1 || i.atk > ATK_MAX[i.rank] || i.def > 20 || t < lo || t > hi) throw new Error('能力値が範囲外: ' + i.name); }
-  const js = `// 自動生成：node tools/build-assets.js（元データは tools/asset-list.js）
+  const js = `// 自動生成：node tools/build-assets.js（元データは tools/asset-list.js・photo-list.json・pdq-list.json）
 // 素材はすべて実在のフリー素材。出典とライセンスは各 credit と LICENSES.md を参照
 const ITEMS = [\n${items.map(o => JSON.stringify(o)).join(',\n')}\n];\n`;
   fs.writeFileSync(path.join(OUT, 'items.js'), js);
