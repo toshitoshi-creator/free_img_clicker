@@ -68,6 +68,7 @@ function drawOne() {
 
 // ---- 1タップ分（手動・自動共通） ----
 function tap(isAuto) {
+  if (fxPaused) return; // レア演出中はタップも自動クリックも止める
   if (!isAuto) st.taps++;
   if (!st.start) st.start = Date.now();
   const gain = mult();
@@ -124,7 +125,7 @@ function showResult(got, comps = [], cellComps = []) {
 }
 
 // ---- レア演出：カードが回転しながら出てきて、光の筋とキラキラが舞う ----
-let fxRank = 0, fxTimer = null;
+let fxRank = 0, fxTimer = null, fxPaused = false, fxDone = false;
 const FX = { SR: { label: 'SR', sparks: 26, time: 2600 }, 'SR+': { label: 'SR+', sparks: 40, time: 3000 }, UR: { label: 'UR', sparks: 64, time: 3800 } };
 function rareFx(g) {
   const o = $('rare'), r = order => ({ SR: 3, 'SR+': 4, UR: 5 })[order];
@@ -143,10 +144,13 @@ function rareFx(g) {
   o.hidden = false;
   void o.offsetWidth; o.classList.add('go'); // アニメーションを最初から
   try { navigator.vibrate && navigator.vibrate(g.it.rank === 'UR' ? [60, 40, 60, 40, 160] : [50, 30, 90]); } catch (e) {}
-  clearTimeout(fxTimer); fxTimer = setTimeout(closeFx, cfg.time + 1500);
+  // 演出が終わるまではタップできない。終わったら「タップで再開」を出す
+  fxPaused = true; fxDone = false; o.classList.remove('done'); o.style.setProperty('--done', cfg.time + 'ms');
+  clearTimeout(fxTimer); fxTimer = setTimeout(() => { fxDone = true; o.classList.add('done'); }, cfg.time);
 }
-function closeFx() { clearTimeout(fxTimer); $('rare').hidden = true; fxRank = 0; }
-$('rare').addEventListener('pointerdown', e => { e.preventDefault(); closeFx(); });
+function closeFx() { clearTimeout(fxTimer); $('rare').hidden = true; fxRank = 0; fxPaused = false; fxDone = false; }
+$('rare').addEventListener('pointerdown', e => { e.preventDefault(); if (fxDone) closeFx(); });
+$('rare').addEventListener('contextmenu', e => e.preventDefault());
 function render() {
   $('pts').textContent = short(st.points);
   $('mult').textContent = '×' + short(mult());
