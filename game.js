@@ -271,9 +271,15 @@ function floatText(x, y) {
 }
 btn.addEventListener('pointerdown', e => {
   e.preventDefault();
+  if (fxPaused) return;
   floatText(e.clientX, e.clientY); tap(false);
   btn.classList.add('press');
+  // タップした感触：短く振動（対応している端末だけ。メニューでオフにできる）
+  if (st.vib !== false) try { navigator.vibrate && navigator.vibrate(12); } catch (err) {}
 });
+const vibLabel = () => `タップの振動：${st.vib !== false ? 'オン' : 'オフ'}`;
+$('vib').textContent = vibLabel();
+$('vib').addEventListener('click', () => { st.vib = st.vib === false; save(); $('vib').textContent = vibLabel(); if (st.vib) try { navigator.vibrate && navigator.vibrate(30); } catch (err) {} });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => btn.addEventListener(t, () => btn.classList.remove('press')));
 btn.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -334,7 +340,7 @@ let armed = false;
 $('reset').addEventListener('click', () => {
   if (!armed) { armed = true; $('reset').textContent = 'もう一度押すとリセット'; setTimeout(() => { armed = false; $('reset').textContent = 'データをリセット'; }, 3000); return; }
   clearInterval(timer); timer = null; timerMs = 0;
-  st = fresh(); save(); armed = false; M = MAIN; dirty(MAIN); dirty(AIM);
+  const vib = st.vib; st = fresh(); st.vib = vib; save(); armed = false; M = MAIN; dirty(MAIN); dirty(AIM);
   $('reset').textContent = 'データをリセット';
   $('stage').innerHTML = EMPTY();
   renderMode(); render(); renderMenu();
