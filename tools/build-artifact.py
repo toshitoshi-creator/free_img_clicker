@@ -28,7 +28,9 @@ if len(sys.argv) > 3 and os.path.exists(sys.argv[3]):
     names = json.loads(re.search(r'const ATLAS = (\[.*?\]);', atlas).group(1))
     miss = [n for n in names if n not in urls]
     if miss: sys.exit('アセットの URL がない: ' + ', '.join(miss))
-    atlas = 'const ATLAS = ' + json.dumps([urls[n] for n in names]) + ';\n'
+    # 表の素材（n・m）はページに埋め込む（アセットが読めない表示環境でも表のガチャは絵が出るように）。AI 画像（a）はアセットの URL
+    emb = lambda n: 'data:image/webp;base64,' + base64.b64encode(open(f'{root}/{n}', 'rb').read()).decode()
+    atlas = 'const ATLAS = ' + json.dumps([emb(n) if re.search(r'/[nm]\d+\.webp$', n) else urls[n] for n in names]) + ';\n'
 js='\n'.join([r('config.js'),atlas,items,r('ai-items.js'),r('game.js'),r('battle.js')]).replace('</script','<\\/script')
 page=f'''<title>素材ガチャクリッカー</title>
 <meta name="theme-color" content="#e8433a">

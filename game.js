@@ -216,7 +216,7 @@ function renderMenu() {
     `${A.AUTO_UNLOCK}種そろうと自動クリックが解放されます（裏の画面を開いているときだけ動きます）`,
     'S・SS を新しく引くと特別な演出が出ます',
   ].map(t => `<li>${t}</li>`).join(''); }
-  if (open) $('aiRec').innerHTML = `<dt>図鑑</dt><dd>${uniq(null, AIM)}/${AI_LIST.length}</dd>${a.clearedAt ? `<dt>全種コンプ</dt><dd>${dur(a.clearedAt - a.start)}</dd>` : ''}` + recordHTML(a, cost(AIM));
+  if (open) $('aiRec').innerHTML = `<dt>AI画像</dt><dd>${esc(atlasState)}</dd><dt>図鑑</dt><dd>${uniq(null, AIM)}/${AI_LIST.length}</dd>${a.clearedAt ? `<dt>全種コンプ</dt><dd>${dur(a.clearedAt - a.start)}</dd>` : ''}` + recordHTML(a, cost(AIM));
 }
 // 表（素材ガチャ）と裏（AIクリッカー）の切り替えボタンと見た目
 function renderMode() {
@@ -341,6 +341,35 @@ $('reset').addEventListener('click', () => {
 });
 $('stage').innerHTML = EMPTY();
 renderMode(); ensureAuto(); render();
+
+// ---- まとめ画像の読み込み（公開ページ用） ----
+// アセットの URL は表示環境によって違うことがあるので、assets.list() が返す「その画面で使える URL」に差し替える。
+// それでも読めないときは fetch して blob: URL にする。結果はメニューの記録に出す（原因を調べるため）
+let atlasState = '確認中';
+async function fixAtlas() {
+  const remote = ATL.map((u, i) => [u, i]).filter(([u]) => /\/_blob\//.test(u));
+  if (!remote.length) { atlasState = 'ページに埋め込み'; return; }
+  try {
+    const a = window.claude && window.claude.use ? await window.claude.use('assets') : null;
+    if (a) {
+      const { assets } = await a.list(), byId = Object.fromEntries(assets.map(x => [x.id, x.url]));
+      for (const [u, i] of remote) { const m = /_blob\/([0-9a-f]{32})/.exec(u); if (m && byId[m[1]]) ATL[i] = byId[m[1]]; }
+    }
+  } catch (e) {}
+  const ok = u => new Promise(r => { const im = new Image(); im.onload = () => r(true); im.onerror = () => r(false); im.src = u; setTimeout(() => r(false), 15000); });
+  const first = remote[0][1];
+  if (await ok(ATL[first])) atlasState = 'OK（' + ATL[first].slice(0, 40) + '）';
+  else {
+    try { // 画像として読めなくても、fetch なら読めることがある
+      await Promise.all(remote.map(async ([, i]) => { const r = await fetch(ATL[i]); if (!r.ok) throw new Error(r.status); ATL[i] = URL.createObjectURL(await r.blob()); }));
+      atlasState = 'OK（fetch）';
+    } catch (e) { atlasState = '読み込めません（' + String(e.message || e).slice(0, 40) + '／' + ATL[first].slice(0, 40) + '）'; }
+  }
+  MAIN.dirtyZ = AIM.dirtyZ = true;
+  if (view === 'zukan') renderZukan();
+  if (view === 'menu') renderMenu();
+}
+fixAtlas();
 // デッキ・対戦（battle.js）から使うもの
 window.SG = { get st() { return st; }, save, esc, fmt, artOf, openDlg, closeDlg: () => dlg.close(), RANKS, RLBL, rcls, dur };
 }
