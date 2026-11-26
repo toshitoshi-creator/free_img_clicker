@@ -69,6 +69,7 @@ function drawOne() {
 // ---- 1タップ分（手動・自動共通） ----
 function tap(isAuto) {
   if (fxPaused) return; // レア演出中はタップも自動クリックも止める
+  if (isAuto && (view !== 'gacha' || document.hidden)) return; // ガチャ画面以外・画面が見えていないときは自動タップしない
   if (!isAuto) st.taps++;
   if (!st.start) st.start = Date.now();
   const gain = mult();
