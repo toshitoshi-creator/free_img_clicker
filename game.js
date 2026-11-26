@@ -24,7 +24,12 @@ function placeholder(it) {
 }
 // 画像：1枚ずつのファイル（img）か、10×10 にまとめた画像（sp = [まとめ画像の番号, マス]）
 const ATL = typeof ATLAS !== 'undefined' ? ATLAS : [];
-const artOf = it => it.sp && ATL[it.sp[0]] ? `<i class="sp${it.rank === 'N' ? ' px' : ''}" style="background-image:url(${ATL[it.sp[0]]});background-position:${(it.sp[1] % 10) * 100 / 9}% ${Math.floor(it.sp[1] / 10) * 100 / 9}%"></i>`
+// まとめ画像は CSS のクラス（.at番号）に1回だけ書く。カードごとに URL を書くと、埋め込み画像（data URI）が
+// カードの数だけ複製されて図鑑が数百MBになり、スマホで落ちるため
+const atlasStyle = document.createElement('style');
+const writeAtlasCss = () => { atlasStyle.textContent = ATL.map((u, i) => `.at${i}{background-image:url("${u}")}`).join('\n'); };
+writeAtlasCss(); document.head.appendChild(atlasStyle);
+const artOf = it => it.sp && ATL[it.sp[0]] ? `<i class="sp at${it.sp[0]}${it.rank === 'N' ? ' px' : ''}" style="background-position:${(it.sp[1] % 10) * 100 / 9}% ${Math.floor(it.sp[1] / 10) * 100 / 9}%"></i>`
   : it.img ? `<img src="${esc(it.img)}" alt=""${it.rank === 'N' ? ' class="px"' : ''} loading="lazy" decoding="async">` : (it.art || placeholder(it));
 
 // ---- 状態 ----
@@ -371,6 +376,7 @@ async function fixAtlas() {
       atlasState = 'OK（fetch）';
     } catch (e) { atlasState = '読み込めません（' + String(e.message || e).slice(0, 40) + '／' + ATL[first].slice(0, 40) + '）'; }
   }
+  writeAtlasCss();
   MAIN.dirtyZ = AIM.dirtyZ = true;
   if (view === 'zukan') renderZukan();
   if (view === 'menu') renderMenu();
