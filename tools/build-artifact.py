@@ -26,10 +26,15 @@ atlas = r('atlas.js')
 if len(sys.argv) > 3 and os.path.exists(sys.argv[3]):
     urls = json.load(open(sys.argv[3]))
     names = json.loads(re.search(r'const ATLAS = (\[.*?\]);', atlas).group(1))
-    miss = [n for n in names if n not in urls]
+    miss = [n for n in names if n not in urls and not re.search(r'/[nm]\d+\.webp$', n)]
     if miss: sys.exit('アセットの URL がない: ' + ', '.join(miss))
     # 表の素材（n・m）はページに埋め込む（アセットが読めない表示環境でも表のガチャは絵が出るように）。AI 画像（a）はアセットの URL
-    emb = lambda n: 'data:image/webp;base64,' + base64.b64encode(open(f'{root}/{n}', 'rb').read()).decode()
+    def emb(n):  # 写真・イラスト（m）は 1マス 104px・画質65 に縮めてページを軽くする（16MB の上限があるため）。ドット絵（n）はそのまま
+        if re.search(r'/m\d+\.webp$', n):
+            im = Image.open(f'{root}/{n}').convert('RGB'); im = im.resize((1040, 1040), Image.LANCZOS)
+            b = io.BytesIO(); im.save(b, 'WEBP', quality=65, method=6); data = b.getvalue()
+        else: data = open(f'{root}/{n}', 'rb').read()
+        return 'data:image/webp;base64,' + base64.b64encode(data).decode()
     atlas = 'const ATLAS = ' + json.dumps([emb(n) if re.search(r'/[nm]\d+\.webp$', n) else urls[n] for n in names]) + ';\n'
 js='\n'.join([r('config.js'),atlas,items,r('ai-items.js'),r('game.js'),r('battle.js')]).replace('</script','<\\/script')
 page=f'''<title>素材ガチャクリッカー</title>

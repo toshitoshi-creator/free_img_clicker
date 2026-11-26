@@ -9,7 +9,6 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = sys.argv[1]
 CELL, NPX, NCELL = 128, 20, 80  # 写真・イラストは 128px、ドット絵は 20 マスを 4 倍（80px）
 os.makedirs(f'{ROOT}/images/atlas', exist_ok=True)
-for f in glob.glob(f'{ROOT}/images/atlas/*.webp'): os.remove(f)
 
 def thumb(pid):
     for ext in ('webp', 'jpg', 'jpeg', 'png'):
@@ -61,6 +60,7 @@ ai = json.load(open(f'{ROOT}/tools/ai-list.json'))
 for L in (main, ai):
     miss = [r['pid'] for r in L if not thumb(r['pid'])]
     if miss: sys.exit(f'サムネイルがない: {len(miss)} 件 {miss[:5]}')
+for f in glob.glob(f'{ROOT}/images/atlas/*.webp'): os.remove(f)  # サムネイルがそろっていることを確かめてから消す
 register(atlases('n', [r for r in main if r['rank'] == 'N'], lambda im, r: pixelate(im), NCELL, True))
 register(atlases('m', [r for r in main if r['rank'] != 'N'], photo, CELL, False))
 register(atlases('a', ai, photo, CELL, False))

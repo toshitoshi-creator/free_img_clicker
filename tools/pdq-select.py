@@ -1,6 +1,6 @@
 # パブリックドメインQ の一覧ページから集めた投稿（posts.jsonl：タイトル・タグ・サムネイル）から、
 # 表のガチャに入れる素材（tools/pdq-list.json）と、裏のAIクリッカーの素材（tools/ai-list.json）を選ぶ。
-#   python3 -I tools/pdq-select.py <posts.jsonl>...
+#   python3 -I tools/pdq-select.py <posts.jsonl>... [--ai]
 # ・実在の人の写真は入れない（偉人＝歴史上の人物と、絵画は別）
 # ・AI 画像（タグ「フリーAI画像」「AI」、AIカラー化）は表には入れず、AIクリッカーへ
 import json, re, sys, os, random, hashlib, collections
@@ -8,7 +8,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 H = lambda s: int(hashlib.md5(s.encode()).hexdigest(), 16)
 
 posts = {}
-for f in sys.argv[1:]:
+for f in [a for a in sys.argv[1:] if not a.startswith('--')]:
     for l in open(f):
         p = json.loads(l); m = re.search(r'-(\d{7})/$', p['u'])
         if m: p['pid'] = m[1]; posts.setdefault(m[1], p)
@@ -76,31 +76,43 @@ def pick(lst, n):  # ジャンルがかたよらないように順番に選ぶ�
             if by[g] and len(out) < n: out.append(by[g].pop(0))
     return out
 
-TARGET = {'N': 720, 'R': 610, 'SR': 450, 'SR+': 150, 'UR': 110, 'LR': 18}
+# パブリックドメインQ から入れる数（全体で約5000種になるように）。すでに入っている素材はそのまま残し、足りない分だけ足す
+#（作り直しても、持っているカードが消えたり名前が変わったりしないように）
+TARGET = {'N': 1393, 'R': 1073, 'SR': 977, 'SR+': 354, 'UR': 210, 'LR': 35}
+KEEP = json.load(open(f'{ROOT}/tools/pdq-list.json')) if os.path.exists(f'{ROOT}/tools/pdq-list.json') else []
+kept = {r['pid'] for r in KEEP} | set(json.load(open(f'{ROOT}/tools/pdq-skip.json')))  # pdq-skip.json：画像が取れない・壊れている投稿
+have = collections.Counter(r['rank'] for r in KEEP)
+need = {k: max(0, v - have[k]) for k, v in TARGET.items()}
+free = lambda lst: [p for p in lst if p['pid'] not in kept]
 # R が足りなければ、簡単な絵（N 候補）の残りを R にまわす
-nsel = pick(S['N'], TARGET['N'])
-rest = [p for p in S['N'] if p not in nsel]
-rsel = pick(S['R'] + (rest if len(S['R']) < TARGET['R'] else []), TARGET['R'])
-ur = pick([dict(p, cat='絵画') for p in S['UR絵画']], TARGET['UR'] // 2)
-ur += pick([dict(p, cat=p['cat'] if p['cat'] == '自然' else '建物') for p in S['UR名所']], TARGET['UR'] - len(ur))
+nsel = pick(free(S['N']), need['N'])
+rest = [p for p in free(S['N']) if p not in nsel]
+rsel = pick(free(S['R']) + (rest if len(free(S['R'])) < need['R'] else []), need['R'])
+have_paint = sum(1 for r in KEEP if r['rank'] == 'UR' and r['cat'] == '絵画')
+ur = pick([dict(p, cat='絵画') for p in free(S['UR絵画'])], max(0, TARGET['UR'] // 2 - have_paint))
+ur += pick([dict(p, cat=p['cat'] if p['cat'] == '自然' else '建物') for p in free(S['UR名所'])], need['UR'] - len(ur))
 # LR に入れる偉人（タグ名 → カード名）。誰でも知っている人だけを選んでいる。すでにいる偉人は入れない
 LR_WHO = {'マリー・アントワネット': 0, 'ジャンヌ・ダルク': 0, 'ナポレオン・ボナパルト': 0, '聖徳太子': 0, '加藤清正': 0, '菅原道真': 0, '平将門': 0,
           'チャールズ・ダーウィン': 0, '柴田勝家': 0, '今川義元': 0, '斎藤道三': 0, 'ルイ14世': 0, '曹操': 0, 'アリストテレス': 0, 'パブロ・ピカソ': 0,
           'ヴォルフガング・アマデウス・モーツァルト': 'モーツァルト', 'エリザベス1世': 0, 'アルフレッド・ノーベル': 0, '孔子': 0, 'ソクラテス': 0,
-          '清少納言': 0, 'ジョン・F・ケネディ': 0, 'マシュー・ペリー': 0, 'ヨハネス・ブラームス': 0}
+          '清少納言': 0, 'ジョン・F・ケネディ': 0, 'マシュー・ペリー': 0, 'ヨハネス・ブラームス': 0,
+          '浅井長政': 0, '福島正則': 0, '小早川隆景': 0, '山中幸盛': 0, '滝川一益': 0, '朝倉義景': 0, '源頼光': 0, '北条時政': 0, '平知盛': 0,
+          '加藤嘉明': 0, 'アーネスト・トンプソン・シートン': 'シートン', '佐久間盛政': 0, '荒木村重': 0, '筒井順慶': 0}
 def lr_pick():  # 1人1枚。写真があれば写真、なければ肖像画
     by = collections.defaultdict(list)
-    for p in S['LR']:
+    done = {r['name'] for r in KEEP if r['rank'] == 'LR'}
+    for p in free(S['LR']):
         for t in p['tags']:
-            if t in LR_WHO and (LR_WHO[t] or t) not in old_names: by[t].append(p)
+            if t in LR_WHO and (LR_WHO[t] or t) not in old_names and (LR_WHO[t] or t) not in done: by[t].append(p)
     out = []
     for who, ps in sorted(by.items(), key=lambda kv: H(kv[0])):
         p = sorted(ps, key=lambda p: ('フリー写真' not in p['tags'], H(p['pid'])))[0]
         out.append(dict(p, cat='偉人', lrname=LR_WHO[who] or who))
-    return out
-sel = {'N': nsel, 'R': rsel, 'SR': pick(S['SR'], TARGET['SR']), 'SR+': pick(S['SR+'], TARGET['SR+']), 'UR': ur, 'LR': lr_pick()}
+    return out[:need['LR']]
+sel = {'N': nsel, 'R': rsel, 'SR': pick(free(S['SR']), need['SR']), 'SR+': pick(free(S['SR+']), need['SR+']), 'UR': ur, 'LR': lr_pick()}
 
-out, names = [], set(old_names)
+# 前からの素材を先に、新しい素材をうしろに並べる（まとめ画像の中の位置が変わらないように）
+out, names = list(KEEP), set(old_names) | {r['name'] for r in KEEP}
 for rank, lst in sel.items():
     for p in lst:
         n = p.get('lrname') or name_of(p); base = n; k = 2
@@ -111,10 +123,12 @@ for rank, lst in sel.items():
         if a and rank in ('UR', 'LR'): r['artist'] = a[1]
         if rank == 'LR': r['fy'] = 0.38  # 顔が上のほうにあるので少し上を中心に切り抜く
         out.append(r)
-print({k: len(v) for k, v in sel.items()}, 'total', len(out))
+print('追加', {k: len(v) for k, v in sel.items()}, '不足', {k: need[k] - len(sel[k]) for k in need}, 'total', len(out))
 json.dump(out, open(f'{ROOT}/tools/pdq-list.json', 'w'), ensure_ascii=False, indent=0)
 
 # ===== 裏のAIクリッカー：AI 画像を題材ごとのランクに分ける =====
+# 公開ページのアセット（まとめ画像）と合わなくなるので、--ai を付けたときだけ作り直す
+if '--ai' not in sys.argv: sys.exit(0)
 AIR = [
     {'k': 'C', 'label': 'AIポートレート', 'desc': 'AI が作った人物の写真'},
     {'k': 'B', 'label': 'AIワールド', 'desc': 'AI が作った風景・乗り物・食べ物など'},
