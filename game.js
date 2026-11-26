@@ -116,8 +116,37 @@ function showResult(got, comps = [], cellComps = []) {
   const msg = got.length > 1 ? `${got.length}個ゲット！${newCount ? `（新規 ${newCount}）` : ''}` : best.isNew ? '新しい素材をゲット！' : `ダブり… ×${st.own[best.it.id]}`;
   let extra = cellComps.map(k => `<p class="comp">${esc(k)} コンプ！ 倍率 ×${CONFIG.GENRE_BONUS}</p>`).join('') + comps.map(k => `<p class="comp">${RLBL[k]} コンプリート！ 倍率 ×${CONFIG.COMP_BONUS[k]}</p>`).join('');
   if (comps.length && st.clearedAt) extra = `<p class="comp all">🎉 全${ITEMS.length}種コンプリート！</p><p class="empty">${dur(st.clearedAt - st.start)}・${fmt(st.taps)}タップ・${fmt(st.draws)}回</p>`;
-  $('stage').innerHTML = card(best.it, { pop: true, isNew: best.isNew }) + `<p class="empty">${msg}</p>` + extra;
+  const shine = ['SR', 'SR+', 'UR'].includes(best.it.rank) ? ` shine shine-${rcls(best.it.rank)}` : '';
+  $('stage').innerHTML = card(best.it, { pop: true, isNew: best.isNew }).replace('class="card ', `class="card${shine} `) + `<p class="empty">${msg}</p>` + extra;
+  // SR 以上を新しく引いたとき・UR を引いたときは全画面の演出
+  const rare = got.filter(g => order[g.it.rank] >= 3).sort((a, b) => order[b.it.rank] - order[a.it.rank] || (b.isNew - a.isNew))[0];
+  if (rare && (rare.isNew || rare.it.rank === 'UR')) rareFx(rare);
 }
+
+// ---- レア演出：カードが回転しながら出てきて、光の筋とキラキラが舞う ----
+let fxRank = 0, fxTimer = null;
+const FX = { SR: { label: 'SR', sparks: 26, time: 2600 }, 'SR+': { label: 'SR+', sparks: 40, time: 3000 }, UR: { label: 'UR', sparks: 64, time: 3800 } };
+function rareFx(g) {
+  const o = $('rare'), r = order => ({ SR: 3, 'SR+': 4, UR: 5 })[order];
+  if (!o.hidden && r(g.it.rank) <= fxRank) return; // 表示中はもっと上のランクだけ差し替える
+  fxRank = r(g.it.rank);
+  const cfg = FX[g.it.rank];
+  o.className = `rare rare-${rcls(g.it.rank)}`;
+  $('rfront').innerHTML = card(g.it, { isNew: g.isNew });
+  $('rlabel').innerHTML = `<b>${cfg.label}</b>${g.isNew ? '<span>NEW!</span>' : ''}`;
+  $('rname').textContent = g.it.name;
+  // キラキラの粒：中心から四方へ飛び散って瞬く
+  $('rsparks').innerHTML = Array.from({ length: cfg.sparks }, (_, i) => {
+    const a = Math.random() * Math.PI * 2, d = 90 + Math.random() * 170, s = 6 + Math.random() * 14;
+    return `<i style="--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;--s:${s}px;--t:${(0.9 + Math.random() * 1.2).toFixed(2)}s;--d:${(0.35 + Math.random() * 0.9).toFixed(2)}s"></i>`;
+  }).join('');
+  o.hidden = false;
+  void o.offsetWidth; o.classList.add('go'); // アニメーションを最初から
+  try { navigator.vibrate && navigator.vibrate(g.it.rank === 'UR' ? [60, 40, 60, 40, 160] : [50, 30, 90]); } catch (e) {}
+  clearTimeout(fxTimer); fxTimer = setTimeout(closeFx, cfg.time + 1500);
+}
+function closeFx() { clearTimeout(fxTimer); $('rare').hidden = true; fxRank = 0; }
+$('rare').addEventListener('pointerdown', e => { e.preventDefault(); closeFx(); });
 function render() {
   $('pts').textContent = short(st.points);
   $('mult').textContent = '×' + short(mult());
