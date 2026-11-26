@@ -7,7 +7,7 @@
 - `index.html` … 画面
 - `style.css` … 見た目
 - `config.js` … バランス調整用の数値（排出率・倍率・自動クリック）
-- `items.js` … 素材データ（全949種：N329 / R288 / SR127 / SR+86 / UR83 / LR36、13ジャンル。攻撃・防御つき）。`tools/build-assets.js` で自動生成
+- `items.js` … 素材データ（全965種：N329 / R288 / SR127 / SR+86 / UR83 / LR52、13ジャンル。攻撃・防御つき）。`tools/build-assets.js` で自動生成
 - `images/n` ドット絵 PNG、`images/r` イラスト（SVG・WebP）、`images/sr` 写真（SR・SR+ 240px、UR・LR 320px JPEG）
 - `tools/asset-list.js` … N・R の素材一覧、`tools/photo-list.json` … SR・SR+・UR の写真と絵画の一覧（`rank` に `'SR+'` / `'UR'` / `'LR'`、省略で SR）、`tools/gld_fetch.py` … Google Landmarks の画像を1枚ずつ取得（ここを編集して作り直す）
 - `LICENSES.md` … 素材のクレジットとライセンス
@@ -30,7 +30,8 @@
   - N ドット絵：Streamline Pixel（CC BY 4.0）・pixelarticons（MIT）を色付けしたもの、Twemoji（CC BY 4.0）を18マスにドット化したもの
   - R イラスト：Twemoji（CC BY 4.0）・Microsoft Fluent Emoji 3D（MIT）
   - UR 名所・名画：有名な建物＝Google Landmarks Dataset v2（Wikimedia Commons の写真。CC BY / CC0 など写真ごと）、有名な乗り物＝国立航空宇宙博物館（CC0）、絵画＝広重・北斎・レンブラント・ゴッホなど（Cooper Hewitt・スミソニアン・アメリカ美術館、CC0）
-  - LR 偉人：国立肖像画美術館（National Portrait Gallery、CC0）の偉人36人の写真・肖像画（リンカーン・ワシントン・フランクリン・エジソン・アインシュタイン・グラハム・ベル・ライト・ポー・トウェインなど）。ドット・イラストはなし。カードは黒と金
+  - LR 偉人：国立肖像画美術館（National Portrait Gallery、CC0）の偉人36人の写真・肖像画（リンカーン・ワシントン・フランクリン・エジソン・アインシュタイン・グラハム・ベル・ライト・ポー・トウェインなど）と、パブリックドメインQ（パブリックドメイン）の日本の偉人16人（坂本龍馬・高杉晋作・木戸孝允・伊藤博文・板垣退助・山縣有朋・中岡慎太郎・夏目漱石・野口英世・渋沢栄一・陸奥宗光の写真、織田信長・豊臣秀吉・上杉謙信・明智光秀・源義経と弁慶の肖像画・浮世絵）。ドット・イラストはなし。カードは黒と金
+    - パブリックドメインQ の画像は元ページを Referer にしないと取れない。使うのはページのプレビュー画像（フルサイズはクイズ回答が必要なので使わない）
   - SR+ 人気・貴重：SR の写真のうち人気の動物（パンダ・ライオンなど）、人気の乗り物（スポーツカー・こうそくれっしゃなど）、貴重品（銀器・アンティークの時計や椅子）。カードは金と赤
   - SR 写真：Smithsonian Open Access（CC0。動物＝国立動物園、家具・食器＝クーパー・ヒューイット、飛行機・宇宙船＝国立航空宇宙博物館）、Fruits-360（MIT。果物・野菜）、Open Images Dataset（CC BY 2.0。植物・乗り物。写真ごとに撮影者を表記）
 - **ランク**：N＝ドット絵、R＝イラスト、SR＝写真、SR+＝人気・貴重な写真、UR＝有名な建物・乗り物・名画、LR＝偉人。排出率 57/27/8/5/2/1%。種類数は N＞R＞SR＞SR+＞UR＞LR

@@ -7,7 +7,7 @@
 #   植物・乗り物: Open Images Dataset V4 のテスト画像（各写真の撮影者による CC BY 2.0。作者と元ページは photo-list.json）
 #   UR 建物: Google Landmarks Dataset v2（Wikimedia Commons の写真。CC BY / CC0 / PD のみ。作者・ライセンスは photo-list.json）
 #   UR 絵画: Cooper Hewitt・Smithsonian American Art Museum（Smithsonian Open Access, CC0）
-#   LR 偉人: National Portrait Gallery（Smithsonian Open Access, CC0）
+#   LR 偉人: National Portrait Gallery（Smithsonian Open Access, CC0）、日本の偉人はパブリックドメインQ（パブリックドメイン。ページのプレビュー画像を使用）
 import json, os, sys, subprocess, urllib.request
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
@@ -32,6 +32,12 @@ def fetch(it):
             sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import gld_fetch
             open(p, 'wb').write(gld_fetch.fetch(it['media']))
         return p
+    if it['src'] == 'pdq':  # パブリックドメインQ：画像は元ページを Referer にしないと取れない
+        p = os.path.join(CACHE, 'pdq_' + it['media'] + '.jpg')
+        if not os.path.exists(p):
+            req = urllib.request.Request(it['imgurl'], headers={'User-Agent': 'Mozilla/5.0', 'Referer': it['url']})
+            open(p, 'wb').write(urllib.request.urlopen(req, timeout=60).read())
+        return p
     if it['src'] == 'oi':
         p = os.path.join(CACHE, it['media'] + '.jpg')
         if not os.path.exists(p):
@@ -47,13 +53,13 @@ for it in json.load(open(os.path.join(ROOT, 'tools/photo-list.json'), encoding='
     S = SIZE[it.get('rank', 'SR')]
     im = Image.open(fetch(it)); im.draft('RGB', (S * 4, S * 4)); im = im.convert('RGB')
     w, h = im.size
-    if it['src'] in ('nzp', 'oi', 'gld', 'npg'):  # 動物・植物・乗り物の写真：主役が入るように正方形に切り抜き
-        m = min(w, h); cx, cy = it.get('fx', .5) * w, it.get('fy', .5) * h
-        x = min(max(0, cx - m / 2), w - m); y = min(max(0, cy - m / 2), h - m)
-        im = im.crop((int(x), int(y), int(x + m), int(y + m)))
-    elif it['src'] in ('ch', 'nasm', 'saam'):  # 博物館の収蔵品：背景色で正方形に余白を足して全体を見せる
+    if it.get('fit') == 'contain' or it['src'] in ('ch', 'nasm', 'saam'):  # 収蔵品・絵画：背景色で正方形に余白を足して全体を見せる
         px = [im.getpixel(p) for p in [(2, 2), (w - 3, 2), (2, h - 3), (w - 3, h - 3)]]
         bg = tuple(sum(c[i] for c in px) // 4 for i in range(3))
         m = max(w, h); sq = Image.new('RGB', (m, m), bg); sq.paste(im, ((m - w) // 2, (m - h) // 2)); im = sq
+    elif it['src'] in ('nzp', 'oi', 'gld', 'npg', 'pdq'):  # 写真：主役（顔）が入るように正方形に切り抜き
+        m = min(w, h); cx, cy = it.get('fx', .5) * w, it.get('fy', .5) * h
+        x = min(max(0, cx - m / 2), w - m); y = min(max(0, cy - m / 2), h - m)
+        im = im.crop((int(x), int(y), int(x + m), int(y + m)))
     im.resize((S, S), Image.LANCZOS).save(os.path.join(ROOT, 'images/sr', it['id'] + '.jpg'), quality=80, optimize=True, progressive=True)
 print('ok')

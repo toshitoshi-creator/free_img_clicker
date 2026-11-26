@@ -234,7 +234,7 @@ $('grid').addEventListener('click', e => { const b = e.target.closest('button[da
 $('credits').addEventListener('click', () => {
   // 配布元（URL＋ライセンス）ごとにまとめる。スミソニアンは撮影者・所蔵館が複数
   const src = {};
-  const isSI = c => /si\.edu|cooperhewitt/.test(c.url), isOI = c => c.src === 'oi', isGLD = c => c.src === 'gld';
+  const isSI = c => /si\.edu|cooperhewitt/.test(c.url) || /Smithsonian/.test(c.author), isOI = c => c.src === 'oi', isGLD = c => c.src === 'gld';
   ITEMS.forEach(i => { const c = i.credit;
     if (isOI(c)) { // Open Images は写真ごとに撮影者と元ページを表示（CC BY 2.0 の表記）
       (src.oi = src.oi || { c: { author: 'Open Images Dataset（Flickr の各撮影者）', license: 'CC BY 2.0', url: 'https://creativecommons.org/licenses/by/2.0/', note: '正方形に切り抜き・縮小' }, list: [], authors: new Set(), each: [] }).list.push(i.name);
@@ -242,8 +242,11 @@ $('credits').addEventListener('click', () => {
     if (isGLD(c)) { // 有名な建物は Wikimedia Commons の撮影者ごとに表示
       (src.gld = src.gld || { c: { author: 'Google Landmarks Dataset v2（Wikimedia Commons の各撮影者）', license: 'CC BY / CC0 など（写真ごと）', url: 'https://github.com/cvdfoundation/google-landmark', note: '正方形に切り抜き・縮小' }, list: [], authors: new Set(), each: [] }).list.push(i.name);
       src.gld.each.push(`${esc(i.name)}：<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.author.replace('（Wikimedia Commons）', ''))}</a>（${esc(c.license)}）`); return; }
+    if (c.src === 'pdq') { // 日本の偉人：パブリックドメインQ の各ページへのリンク
+      (src.pdq = src.pdq || { c: { author: 'パブリックドメインQ', license: 'パブリックドメイン', url: 'https://publicdomainq.net/', note: '正方形に加工・縮小' }, list: [], authors: new Set(), each: [], eachLabel: '作品ごとの元ページ' }).list.push(i.name);
+      src.pdq.each.push(`${esc(i.name)}${c.artist ? '（' + esc(c.artist) + '）' : ''}：<a href="${esc(c.url)}" target="_blank" rel="noopener">元ページ</a>`); return; }
     const k = isSI(c) ? 'si' : c.url + c.license; (src[k] = src[k] || { c: isSI(c) ? { author: 'Smithsonian Open Access', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に加工・縮小' } : c, list: [], authors: new Set() }).list.push(i.name); src[k].authors.add(c.author.replace('（Smithsonian Open Access）', '')); });
-  openDlg(`<h3>クレジット</h3><p class="small">このゲームの${ITEMS.length}種の絵と写真は、すべて実在のフリー素材です。</p><ul class="cr">${Object.values(src).map(g => `<li><b>${esc(g.c.author)}</b><br>${esc(g.c.license)}${g.c.note ? '・' + esc(g.c.note) : ''}・<a href="${esc(g.c.url)}" target="_blank" rel="noopener">配布元</a>${g.each ? `<details><summary class="small">写真ごとの撮影者（${g.each.length}件）</summary><span class="small">${g.each.join('<br>')}</span></details>` : g.authors.size > 1 ? `<details><summary class="small">撮影・所蔵（${g.authors.size}件）</summary><span class="small">${[...g.authors].map(esc).join('<br>')}</span></details>` : ''}<details><summary class="small">使っている素材（${g.list.length}種）</summary><span class="small">${g.list.map(esc).join('、')}</span></details></li>`).join('')}</ul>`
+  openDlg(`<h3>クレジット</h3><p class="small">このゲームの${ITEMS.length}種の絵と写真は、すべて実在のフリー素材です。</p><ul class="cr">${Object.values(src).map(g => `<li><b>${esc(g.c.author)}</b><br>${esc(g.c.license)}${g.c.note ? '・' + esc(g.c.note) : ''}・<a href="${esc(g.c.url)}" target="_blank" rel="noopener">配布元</a>${g.each ? `<details><summary class="small">${g.eachLabel || '写真ごとの撮影者'}（${g.each.length}件）</summary><span class="small">${g.each.join('<br>')}</span></details>` : g.authors.size > 1 ? `<details><summary class="small">撮影・所蔵（${g.authors.size}件）</summary><span class="small">${[...g.authors].map(esc).join('<br>')}</span></details>` : ''}<details><summary class="small">使っている素材（${g.list.length}種）</summary><span class="small">${g.list.map(esc).join('、')}</span></details></li>`).join('')}</ul>`
     + `<p class="small">MIT ライセンスの素材の著作権表示と許諾文は LICENSES.md に収録しています。フォント：M PLUS Rounded 1c（SIL Open Font License）</p>`);
 });
 

@@ -20,6 +20,7 @@ const CREDIT = {
   twp: { author: 'Twitter, Inc. ほか（Twemoji）', license: 'CC BY 4.0', url: 'https://github.com/jdecked/twemoji', note: 'ドット化' },
   nasm: { author: 'National Air and Space Museum（Smithsonian Open Access）', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に余白を足して縮小' },
   gld: { author: '', license: '', url: '', note: '正方形に切り抜き・縮小（Google Landmarks Dataset v2 / Wikimedia Commons より）' },
+  pdq: { author: 'パブリックドメインQ', license: 'パブリックドメイン', url: 'https://publicdomainq.net/', note: '正方形に加工・縮小' },
   npg: { author: 'National Portrait Gallery（Smithsonian Open Access）', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に切り抜き・縮小' },
   saam: { author: 'Smithsonian American Art Museum（Smithsonian Open Access）', license: 'CC0', url: 'https://www.si.edu/openaccess', note: '正方形に余白を足して縮小' },
   oi: { author: '', license: 'CC BY 2.0', url: 'https://creativecommons.org/licenses/by/2.0/', note: '正方形に切り抜き・縮小（Open Images Dataset より）' },
@@ -127,7 +128,7 @@ function toPixelSvg(mask, n, fill, line) {
       fs.copyFileSync(f, path.join(OUT, 'images/r', it.id + '.webp')); o.img = `images/r/${it.id}.webp`;
     } else if (it.src.startsWith('photo:')) { // 写真は tools/build-photos.py で images/sr/ に作成済み
       const k = it.src.slice(6); o.img = `images/sr/${it.id}.jpg`;
-      o.credit = { ...CREDIT[k], ...((k === 'ch' || k === 'nasm' || k === 'saam' || k === 'npg') && it.url ? { url: it.url } : {}), ...(k === 'nzp' ? { author: `${it.author}（Smithsonian Open Access）` } : {}),
+      o.credit = { ...CREDIT[k], ...((k === 'ch' || k === 'nasm' || k === 'saam' || k === 'npg' || k === 'pdq') && it.url ? { url: it.url } : {}), ...(k === 'nzp' ? { author: `${it.author}（Smithsonian Open Access）` } : {}),
         ...(k === 'npg' ? { author: `${it.author}（National Portrait Gallery / Smithsonian Open Access）` } : {}),
         ...(k === 'oi' ? { author: `${it.author}（Flickr）`, url: it.url } : {}),
         ...(k === 'gld' ? { author: `${it.author}（Wikimedia Commons）`, license: it.license, url: it.url } : {}),
