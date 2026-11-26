@@ -248,3 +248,21 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
   .rare.go .rinner,.rare.go .rrays,.rare.go .rsparks i,.rare.go .rglow,.card.shine::after,.rare.go .rfront .card::after{animation:none}
   .rare .rrays{opacity:.6}.rare .rlabel,.rare .rname,.rare.done .rtap{opacity:1}.rare.go .rlabel{animation:none}
 }
+
+/* ===== LR（偉人）：黒と金、ゆっくり光が流れる ===== */
+.LR{background:linear-gradient(135deg,#1b1408,#4a3510 30%,#f4d27a 50%,#4a3510 70%,#1b1408);background-size:250% 250%;animation:lr 5s ease-in-out infinite;color:#fff4d6}
+.LR .rk{background:linear-gradient(90deg,#b8860b,#f4d27a,#b8860b);color:#1b1408}
+.card.LR .nm,.card.LR .cnt,.mc.LR .mnm{color:#fff4d6}
+@keyframes lr{50%{background-position:100% 100%}}
+.locked.LR{animation:none}
+@media(prefers-reduced-motion:reduce){.LR{animation:none}}
+.rare-LR{--c1:#fff1b8;--c2:#c9a227;background:radial-gradient(circle at 50% 45%,rgba(60,40,5,.6),rgba(5,3,0,.96))}
+.rare-LR.go .rrays{background:repeating-conic-gradient(from 0deg,#fff6d0 0 3deg,transparent 3deg 9deg,#e8c35a 9deg 12deg,transparent 12deg 20deg);animation:rrays 14s linear infinite,rfade .8s .25s ease-out forwards}
+.rare-LR .rlabel b{background:linear-gradient(180deg,#fff8dc,#f4d27a 45%,#b8860b);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px #3a2a05;font-size:76px}
+.rare-LR.go .rinner{animation:rspin 2s cubic-bezier(.25,.8,.3,1) both,shake .5s 2s}
+.rare-LR.go .rlabel{animation:rlabel .7s 1.8s cubic-bezier(.2,1.8,.4,1) forwards}
+.rare-LR.go .rname{animation:rfade2 .6s 2.1s forwards}
+.rare-LR .rback{background:repeating-linear-gradient(45deg,#2a1d06 0 10px,#c9a227 10px 14px)}
+.stage .card.shine-LR{box-shadow:0 0 28px #f4d27a,0 0 48px #b8860b}
+.lrlock{font-style:normal;font-size:11px;font-weight:800;color:#fff;background:#4a3510;padding:1px 8px;border-radius:8px;margin-left:6px}
+.comp.lrnew{background:linear-gradient(90deg,#4a3510,#b8860b);color:#fff4d6}

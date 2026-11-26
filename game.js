@@ -37,7 +37,8 @@ const uniq = rank => ITEMS.filter(i => (!rank || i.rank === rank) && st.own[i.id
 let multCache = null;
 const dirty = () => { multCache = null; zukanDirty = true; };
 let zukanDirty = true;
-const RANKS = ['N', 'R', 'SR', 'SR+', 'UR'];
+const RANKS = ['N', 'R', 'SR', 'SR+', 'UR', 'LR'];
+const lrOpen = () => isComp('UR'); // LR（偉人）は UR を全種そろえると出るようになる
 const rcls = r => r.replace('+', 'P'); // CSS クラス名（SR+ → SRP）
 const total = rank => ITEMS.filter(i => i.rank === rank).length;
 const isComp = rank => uniq(rank) === total(rank);
@@ -61,7 +62,7 @@ const autoMs = () => Math.max(CONFIG.AUTO_MIN_MS, Math.round(CONFIG.AUTO_BASE_MS
 function drawOne() {
   const r = Math.random() * 100, R = CONFIG.RATE;
   let acc = 0, rank = 'N';
-  for (const k of [...RANKS].reverse()) { acc += R[k]; if (r < acc) { rank = k; break; } } // レアなランクから順に判定
+  for (const k of [...RANKS].reverse()) { if (k === 'LR' && !lrOpen()) continue; acc += R[k] || 0; if (r < acc) { rank = k; break; } } // レアなランクから順に判定（残りは N）
   const pool = ITEMS.filter(i => i.rank === rank);
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -109,27 +110,28 @@ function card(it, o = {}) {
   return `<${tag} class="card ${rcls(it.rank)}${lock ? ' locked' : ''}${o.pop ? ' pop' : ''}"><span class="rk">${it.rank}</span>${o.isNew ? '<span class="new">NEW</span>' : ''}<div class="art">${artOf(it)}</div><div class="nm">${lock ? '？？？' : esc(it.name)}</div><div class="ad"><span class="atk">攻${lock ? '?' : it.atk}</span><span class="def">防${lock ? '?' : it.def}</span></div><div class="cnt">${o.grid && n ? '×' + n : esc(it.cat)}</div></${tag.split(' ')[0]}>`;
 }
 const dur = ms => { const t = Math.round(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, sec = t % 60; return (h ? h + '時間' : '') + (h || m ? m + '分' : '') + sec + '秒'; };
-const RLBL = { N: 'N ドット', R: 'R イラスト', SR: 'SR 写真', 'SR+': 'SR+ 人気・貴重', UR: 'UR 名所・名画' };
+const RLBL = { N: 'N ドット', R: 'R イラスト', SR: 'SR 写真', 'SR+': 'SR+ 人気・貴重', UR: 'UR 名所・名画', LR: 'LR 偉人' };
 function showResult(got, comps = [], cellComps = []) {
   // 新規 > ランク高い順で一番いいものを大きく表示
-  const order = { UR: 5, 'SR+': 4, SR: 3, R: 2, N: 1 };
+  const order = { LR: 6, UR: 5, 'SR+': 4, SR: 3, R: 2, N: 1 };
   const best = got.slice().sort((a, b) => (b.isNew - a.isNew) || (order[b.it.rank] - order[a.it.rank]))[0];
   const newCount = got.filter(g => g.isNew).length;
   const msg = got.length > 1 ? `${got.length}個ゲット！${newCount ? `（新規 ${newCount}）` : ''}` : best.isNew ? '新しい素材をゲット！' : `ダブり… ×${st.own[best.it.id]}`;
+  const lrNew = comps.includes('UR') ? `<p class="comp all lrnew">✨ LR（偉人）が解放されました！ ガチャから出るようになります</p>` : '';
   let extra = cellComps.map(k => `<p class="comp">${esc(k)} コンプ！ 倍率 ×${CONFIG.GENRE_BONUS}</p>`).join('') + comps.map(k => `<p class="comp">${RLBL[k]} コンプリート！ 倍率 ×${CONFIG.COMP_BONUS[k]}</p>`).join('');
   if (comps.length && st.clearedAt) extra = `<p class="comp all">🎉 全${ITEMS.length}種コンプリート！</p><p class="empty">${dur(st.clearedAt - st.start)}・${fmt(st.taps)}タップ・${fmt(st.draws)}回</p>`;
-  const shine = ['SR', 'SR+', 'UR'].includes(best.it.rank) ? ` shine shine-${rcls(best.it.rank)}` : '';
-  $('stage').innerHTML = card(best.it, { pop: true, isNew: best.isNew }).replace('class="card ', `class="card${shine} `) + `<p class="empty">${msg}</p>` + extra;
-  // SR 以上を新しく引いたとき・UR を引いたときは全画面の演出
-  const rare = got.filter(g => order[g.it.rank] >= 3).sort((a, b) => order[b.it.rank] - order[a.it.rank] || (b.isNew - a.isNew))[0];
-  if (rare && (rare.isNew || rare.it.rank === 'UR')) rareFx(rare);
+  const shine = ['SR', 'SR+', 'UR', 'LR'].includes(best.it.rank) ? ` shine shine-${rcls(best.it.rank)}` : '';
+  $('stage').innerHTML = card(best.it, { pop: true, isNew: best.isNew }).replace('class="card ', `class="card${shine} `) + `<p class="empty">${msg}</p>` + lrNew + extra;
+  // SR 以上を新しく引いたときは全画面の演出
+  const rare = got.filter(g => order[g.it.rank] >= 3 && g.isNew).sort((a, b) => order[b.it.rank] - order[a.it.rank])[0];
+  if (rare && rare.isNew) rareFx(rare); // 全画面演出は新しく手に入れたときだけ（ダブりで毎回止まらないように）
 }
 
 // ---- レア演出：カードが回転しながら出てきて、光の筋とキラキラが舞う ----
 let fxRank = 0, fxTimer = null, fxPaused = false, fxDone = false;
-const FX = { SR: { label: 'SR', sparks: 26, time: 2600 }, 'SR+': { label: 'SR+', sparks: 40, time: 3000 }, UR: { label: 'UR', sparks: 64, time: 3800 } };
+const FX = { SR: { label: 'SR', sparks: 26, time: 2600 }, 'SR+': { label: 'SR+', sparks: 40, time: 3000 }, UR: { label: 'UR', sparks: 64, time: 3800 }, LR: { label: 'LR', sparks: 90, time: 4600 } };
 function rareFx(g) {
-  const o = $('rare'), r = order => ({ SR: 3, 'SR+': 4, UR: 5 })[order];
+  const o = $('rare'), r = order => ({ SR: 3, 'SR+': 4, UR: 5, LR: 6 })[order];
   if (!o.hidden && r(g.it.rank) <= fxRank) return; // 表示中はもっと上のランクだけ差し替える
   fxRank = r(g.it.rank);
   const cfg = FX[g.it.rank];
@@ -144,7 +146,7 @@ function rareFx(g) {
   }).join('');
   o.hidden = false;
   void o.offsetWidth; o.classList.add('go'); // アニメーションを最初から
-  try { navigator.vibrate && navigator.vibrate(g.it.rank === 'UR' ? [60, 40, 60, 40, 160] : [50, 30, 90]); } catch (e) {}
+  try { navigator.vibrate && navigator.vibrate(g.it.rank === 'LR' ? [80, 50, 80, 50, 80, 50, 240] : g.it.rank === 'UR' ? [60, 40, 60, 40, 160] : [50, 30, 90]); } catch (e) {}
   // 演出が終わるまではタップできない。終わったら「タップで再開」を出す
   fxPaused = true; fxDone = false; o.classList.remove('done'); o.style.setProperty('--done', cfg.time + 'ms');
   clearTimeout(fxTimer); fxTimer = setTimeout(() => { fxDone = true; o.classList.add('done'); }, cfg.time);
@@ -184,7 +186,8 @@ function renderZukan() {
     .map(([g, l]) => chip('data-g', g, g === 'ALL' ? '全ジャンル' : g, l, gfilter === g)).join('');
   $('grid').innerHTML = cells().filter(k => cellItems(k).some(i => inR(i) && inG(i))).map(k => {
     const list = cellItems(k), have = list.filter(i => st.own[i.id]).length, done = have === list.length;
-    return `<h3 class="sec${done ? ' done' : ''}">${done ? '★ ' : ''}${esc(k)}<span>${have}/${list.length}</span></h3><div class="grid">${list.map(i => card(i, { grid: true })).join('')}</div>`;
+    const lock = k.startsWith('LR') && !lrOpen() ? '<em class="lrlock">UR を全種そろえると出るようになります</em>' : '';
+    return `<h3 class="sec${done ? ' done' : ''}">${done ? '★ ' : ''}${esc(k)}${lock}<span>${have}/${list.length}</span></h3><div class="grid">${list.map(i => card(i, { grid: true })).join('')}</div>`;
   }).join('');
 }
 

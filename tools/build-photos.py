@@ -7,13 +7,14 @@
 #   植物・乗り物: Open Images Dataset V4 のテスト画像（各写真の撮影者による CC BY 2.0。作者と元ページは photo-list.json）
 #   UR 建物: Google Landmarks Dataset v2（Wikimedia Commons の写真。CC BY / CC0 / PD のみ。作者・ライセンスは photo-list.json）
 #   UR 絵画: Cooper Hewitt・Smithsonian American Art Museum（Smithsonian Open Access, CC0）
+#   LR 偉人: National Portrait Gallery（Smithsonian Open Access, CC0）
 import json, os, sys, subprocess, urllib.request
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 CACHE, FRUITS = sys.argv[1], sys.argv[2]
 S3 = 'https://smithsonian-open-access.s3-us-west-2.amazonaws.com/media/'
-SIZE = {'SR': 240, 'UR': 320}
+SIZE = {'SR': 240, 'SR+': 240, 'UR': 320, 'LR': 320}
 os.makedirs(os.path.join(ROOT, 'images/sr'), exist_ok=True)
 os.makedirs(CACHE, exist_ok=True)
 
@@ -36,7 +37,7 @@ def fetch(it):
         if not os.path.exists(p):
             open(p, 'wb').write(urllib.request.urlopen(f"https://open-images-dataset.s3.amazonaws.com/test/{it['media']}.jpg", timeout=120).read())
         return p
-    unit = {'nzp': 'nzp', 'ch': 'chsdm', 'nasm': 'nasm', 'saam': 'saam'}[it['src']]
+    unit = {'nzp': 'nzp', 'ch': 'chsdm', 'nasm': 'nasm', 'saam': 'saam', 'npg': 'npg'}[it['src']]
     p = os.path.join(CACHE, it['media'] + '.jpg')
     if not os.path.exists(p):
         open(p, 'wb').write(urllib.request.urlopen(f"{S3}{unit}/{it['media']}.jpg", timeout=120).read())
@@ -46,7 +47,7 @@ for it in json.load(open(os.path.join(ROOT, 'tools/photo-list.json'), encoding='
     S = SIZE[it.get('rank', 'SR')]
     im = Image.open(fetch(it)); im.draft('RGB', (S * 4, S * 4)); im = im.convert('RGB')
     w, h = im.size
-    if it['src'] in ('nzp', 'oi', 'gld'):  # 動物・植物・乗り物の写真：主役が入るように正方形に切り抜き
+    if it['src'] in ('nzp', 'oi', 'gld', 'npg'):  # 動物・植物・乗り物の写真：主役が入るように正方形に切り抜き
         m = min(w, h); cx, cy = it.get('fx', .5) * w, it.get('fy', .5) * h
         x = min(max(0, cx - m / 2), w - m); y = min(max(0, cy - m / 2), h - m)
         im = im.crop((int(x), int(y), int(x + m), int(y + m)))

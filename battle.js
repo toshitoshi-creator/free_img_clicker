@@ -5,7 +5,7 @@ const SG = window.SG, esc = SG.esc;
 const BY = Object.fromEntries(ITEMS.map(i => [i.id, i]));
 const D = CONFIG.DECK;           // 枚数制限
 const TRIB = CONFIG.TRIBUTE;     // 出すときに使用不可にする場のカードの枚数
-const ORDER = { UR: 5, 'SR+': 4, SR: 3, R: 2, N: 1 };
+const ORDER = { LR: 6, UR: 5, 'SR+': 4, SR: 3, R: 2, N: 1 };
 const sum = it => it.atk + it.def;
 const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -21,7 +21,7 @@ function mini(it, o = {}) {
 // ================= デッキ =================
 // 存在しないカードと、上限をこえる重複は取り除く（前のデッキに同じカードが複数入っていた場合など）
 const deck = () => (SG.st.deck = (SG.st.deck || []).filter((id, i, a) => BY[id] && a.slice(0, i).filter(x => x === id).length < D.COPY));
-function counts(d) { const c = { N: 0, R: 0, SR: 0, 'SR+': 0, UR: 0 }; d.forEach(id => c[BY[id].rank]++); return c; }
+function counts(d) { const c = { N: 0, R: 0, SR: 0, 'SR+': 0, UR: 0, LR: 0 }; d.forEach(id => c[BY[id].rank]++); return c; }
 const copies = (d, id) => d.filter(x => x === id).length;
 const maxCopies = id => Math.min(D.COPY, SG.st.own[id] || 0);
 // 入れられない理由（入れられるなら空文字）
@@ -29,6 +29,7 @@ function whyNot(d, id) {
   const it = BY[id], c = counts(d);
   if (d.length >= D.SIZE) return `デッキは${D.SIZE}枚までです`;
   if (copies(d, id) >= maxCopies(id)) return copies(d, id) >= D.COPY ? (D.COPY === 1 ? '同じカードは1枚しか入れられません' : `同じカードは${D.COPY}枚までです`) : '持っている枚数までしか入れられません';
+  if (it.rank === 'LR' && c.LR >= D.LR) return `LR は${D.LR}枚までです`;
   if (it.rank === 'UR' && c.UR >= D.UR) return `UR は${D.UR}枚までです`;
   if (isSR(it.rank) && c.SR + c['SR+'] >= D.SR) return `SR と SR+ は合わせて${D.SR}枚までです`;
   if (it.rank === 'R' && c.R >= D.R) return `R は${D.R}枚までです`;
@@ -37,7 +38,7 @@ function whyNot(d, id) {
 function deckProblem(d) {
   if (d.length !== D.SIZE) return `デッキは${D.SIZE}枚ちょうどにしてください（いま${d.length}枚）`;
   const c = counts(d);
-  if (c.UR > D.UR || c.SR + c['SR+'] > D.SR || c.R > D.R) return '枚数制限をこえています';
+  if (c.LR > D.LR || c.UR > D.UR || c.SR + c['SR+'] > D.SR || c.R > D.R) return '枚数制限をこえています';
   if ([...new Set(d)].some(id => copies(d, id) > maxCopies(id))) return '持っていないカードが入っています';
   return '';
 }
@@ -46,14 +47,14 @@ function autoDeck() {
   const owned = ITEMS.filter(i => SG.st.own[i.id]).sort((a, b) => sum(b) - sum(a) || ORDER[b.rank] - ORDER[a.rank]);
   const d = [];
   const add = pred => { for (const it of owned) if (pred(it)) while (!whyNot(d, it.id) && d.length < D.SIZE) d.push(it.id); };
-  add(i => i.rank === 'UR'); add(i => isSR(i.rank)); add(i => i.rank === 'R'); add(() => true);
+  add(i => i.rank === 'LR'); add(i => i.rank === 'UR'); add(i => isSR(i.rank)); add(i => i.rank === 'R'); add(() => true);
   return d;
 }
 let dfilter = 'ALL';
 function renderDeck() {
   const d = deck(), c = counts(d), ok = !deckProblem(d);
   const chip = (lbl, n, max) => `<span class="dc${max != null && n > max ? ' over' : ''}">${lbl} <b>${n}</b>${max != null ? '/' + max : ''}</span>`;
-  $('dcount').innerHTML = `<span class="dc big${ok ? ' ok' : ''}">合計 <b>${d.length}</b>/${D.SIZE}</span>` + chip('UR', c.UR, D.UR) + chip('SR・SR+', c.SR + c['SR+'], D.SR) + chip('R', c.R, D.R) + chip('N', c.N);
+  $('dcount').innerHTML = `<span class="dc big${ok ? ' ok' : ''}">合計 <b>${d.length}</b>/${D.SIZE}</span>` + chip('LR', c.LR, D.LR) + chip('UR', c.UR, D.UR) + chip('SR・SR+', c.SR + c['SR+'], D.SR) + chip('R', c.R, D.R) + chip('N', c.N);
   $('dnum').textContent = ok ? '（対戦できます）' : '';
   const uniq = [...new Set(d)].sort((a, b) => ORDER[BY[b].rank] - ORDER[BY[a].rank] || sum(BY[b]) - sum(BY[a]));
   $('dlist').innerHTML = uniq.length ? uniq.map(id => mini(BY[id], { badge: copies(d, id) > 1 ? '×' + copies(d, id) : '', cls: ' rm' })).join('') : '<p class="note">まだ空です。下のカードを押すか「おまかせ」で作れます</p>';
