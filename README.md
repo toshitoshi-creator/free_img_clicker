@@ -15,7 +15,7 @@
 - `LICENSES.md` … 素材のクレジットとライセンス
 - `game.js` … ゲームロジック（ガチャ・図鑑・メニュー）
 - `battle.js` … デッキ作成と CPU 対戦
-- `tools/build-artifact.py` … 公開用の1ファイル版を作る（images/n・r・sr の画像は埋め込み。まとめ画像は公開ページのアセットに上げ、その URL の JSON を第3引数で渡す）
+- `tools/build-artifact.py` … 公開用の1ファイル版を作る（images/n・r・sr の画像は埋め込み。まとめ画像は公開ページのアセットに上げ、その URL の JSON（`tools/artifact-atlas-urls.json`）を第3引数で渡す。まとめ画像を作り直したら上げ直す）
 
 ## 画面（スマホアプリ専用・縦画面）
 - 上：ポイント／クリック合計／倍率／図鑑のステータスバー（大きい数は 万・億・兆・京・垓 で短く表示）
